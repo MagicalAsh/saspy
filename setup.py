@@ -15,7 +15,7 @@
 #  limitations under the License.
 #
 
-exec(open('./saspy/version.py').read())
+from saspy.version import __version__
 
 try:
     from setuptools import setup
