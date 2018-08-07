@@ -44,7 +44,127 @@ class SASProcCommons:
         else:
             print("log is not a string but type:%s" % (str(type(log))))
 
-    def _makeProcCallMacro(self, objtype: str, objname: str, data: object = None, args: dict = None) -> str:
+    @staticmethod
+    def _genCode(key, **kwargs):
+        code = key
+        product = kwargs["product"]
+        args = kwargs["args"]
+        product.logger.debug(key + " statement,length: %s,%s", args[key], len(args[key]))
+
+        if isinstance(args[key], list):
+            code += " " + " ".join(args[key])
+        elif isinstance(args[key], bool) and not args[key]:
+            return ""  # We _don't_ want it here.
+        else:
+            code += " %s" % (args[key])
+
+        code += ";\n"
+        return code
+
+    @staticmethod
+    def _genCodeSingleVar(key, **kwargs):
+        args = kwargs["args"]
+        if len(args[key]) != 1:
+            raise ValueError("ERROR in code submission. " + key.upper() + " can only have one variable and you submitted: %s",
+                             args[key])
+
+        return SASProcCommons._genCode(key, **kwargs)
+
+    @staticmethod
+    def _getKeywords():
+        """
+        Contains a list of keywords for a SAS Proc statement. If the keyword requires
+        special code generation handling, it is represented by a tuple of the key, and
+        the function that generates the given keyword's code.
+        :return: A list of keywords, where the
+        """
+        return [
+            "absorb",
+            "add",
+            ("architecture", _SpecialKeywords._architecture_key),
+            "assess",
+            "autoreg",
+            "bayes",
+            "blockseason",
+            "by",
+            "cdfplot",
+            ("cls", lambda key, **kwargs: SASProcCommons._genCode("class", **kwargs)),
+            "code",
+            "comphist",
+            "corr",
+            "crosscorr",
+            "crossvar",
+            "cycle",
+            "decomp",
+            "deplag",
+            "effect",
+            "fcmport",
+            ("freq", SASProcCommons._genCodeSingleVar),
+            "forecast",
+            "hidden",
+            "id",
+            "histogram",
+            "hazardratio",
+            "identify",
+            ("impute", _SpecialKeywords._impute_key),
+            ("input",_SpecialKeywords._input_key),
+            "inset",
+            "intervals",
+            "irregular",
+            "level",
+            "model",
+            "contrast",
+            "estimate",
+            "lsmeans",
+            "lsmestimate",
+            "test",
+            "manova",
+            "means",
+            "nloptions",
+            "oddsratio",
+            "outarrays",
+            "outscalars",
+            "outlier",
+            "paired",
+            "parms",
+            "partial",
+            "pathdiagram",
+            "performance",
+            "ppplot",
+            "prior",
+            ("priors", _SpecialKeywords._priors_key),
+            "probplot",
+            "qqplot",
+            "random",
+            "randomreg",
+            "repeated",
+            "roc",
+            "season",
+            ("selection",_SpecialKeywords._selection_key),
+            "slope",
+            "splinereg",
+            "splineseason",
+            "store",
+            "trend",
+            "slice",
+            "spec",
+            "strata",
+            ("target", _SpecialKeywords._target_key),
+            ("train", _SpecialKeywords._train_key),
+            "var",
+            ("weight", SASProcCommons._genCodeSingleVar),
+            "grow",
+            "prune",
+            "rules",
+            "partition",
+            ("out", _SpecialKeywords._out_key),
+            "xchart",
+            ("score", _SpecialKeywords._score_key),
+            ("save", _SpecialKeywords._save_key)
+        ]
+
+    @staticmethod
+    def _makeProcCallMacro(product, objtype: str, objname: str, data: object = None, args: dict = None) -> str:
         """
         This method generates the SAS code from the python objects and included data and arguments.
         The list of args in this method is largely alphabetical but there are exceptions in order to
@@ -65,27 +185,27 @@ class SASProcCommons:
 
         # The different SAS products vary slightly in plotting and out methods.
         # this block sets the options correctly for plotting and output statements
-        if self.sasproduct.lower() == 'stat' and not ('ODSGraphics' in args.keys() or ODSGraphics == False) :
+        if product.sasproduct.lower() == 'stat' and not ('ODSGraphics' in args.keys() or ODSGraphics == False) :
             outmeth = ''
             plot = 'plot=all'
-        if self.sasproduct.lower() == 'qc':
+        elif product.sasproduct.lower() == 'qc':
             outmeth = ''
             plot = ''
-        if self.sasproduct.lower() == 'ets' and not ('ODSGraphics' in args.keys() or ODSGraphics == False) :
+        elif product.sasproduct.lower() == 'ets' and not ('ODSGraphics' in args.keys() or ODSGraphics == False) :
             outmeth = 'out'
             plot = 'plot=all'
-        if self.sasproduct.lower() == 'em':
+        elif product.sasproduct.lower() == 'em':
             outmeth = ''
             plot = ''
-        if self.sasproduct.lower() == 'dmml':
+        elif product.sasproduct.lower() == 'dmml':
             outmeth = 'out'
             plot = ''
-        self.logger.debug("product caller: " + self.sasproduct.lower())
+        product.logger.debug("product caller: " + product.sasproduct.lower())
         code = "%macro proccall(d);\n"
         # resolve issues withe Proc options, out= and plots=
         # The procopts statement should be in every procedure as a way to pass arbitrary options to the procedures
         if 'procopts' in args:
-            self.logger.debug("procopts statement,length: %s,%s", args['procopts'], len(args['procopts']))
+            product.logger.debug("procopts statement,length: %s,%s", args['procopts'], len(args['procopts']))
             procopts = args['procopts']
         if 'outmeth' in args:
             outmeth = args['outmeth']
@@ -98,502 +218,26 @@ class SASProcCommons:
                 objtype, data.libref, data.table, data._dsopts(), plot, outmeth, outstr, procopts)
         else:
             code += "proc %s data=%s.%s%s %s %s ;\n" % (objtype, data.libref, data.table, data._dsopts(), plot, procopts)
-        self.logger.debug("args value: " + str(args))
-        self.logger.debug("args type: " + str(type(args)))
+        product.logger.debug("args value: " + str(args))
+        product.logger.debug("args type: " + str(type(args)))
 
         # this list is largely alphabetical but there are exceptions in order to
         # satisfy the order needs of the statements for the procedure
         # as an example... http://support.sas.com/documentation/cdl/en/statug/68162/HTML/default/viewer.htm#statug_glm_syntax.htm#statug.glm.glmpostable
-        if 'absorb' in args:
-            self.logger.debug("absorb statement,length: %s,%s", args['absorb'], len(args['absorb']))
-            code += "absorb %s;\n" % (args['absorb'])
-        if 'add' in args:
-            self.logger.debug("add statement,length: %s,%s", args['add'], len(args['add']))
-            code += "add %s;\n" % (args['add'])
-        # only three valid values logistic, mlp, mlp direct
-        if 'architecture' in args:
-            self.logger.debug("architecture statement,length: %s,%s", args['architecture'], len(args['architecture']))
-            if args['architecture'].lower().strip() in ['logistic', 'mlp', 'mlp direct']:
-                code += "architecture %s;\n" % (args['architecture'])
-            else:
-                print("ERROR in code submission. ARCHITECTURE can only have one of these")
-                print("values -- ['logistic', 'mlp', 'mlp direct'] you submitted: %s", args['architecture'])
-        if 'assess' in args:
-            self.logger.debug("assess statement,length: %s,%s", args['assess'], len(args['assess']))
-            code += "assess %s;\n" % (args['assess'])
-        if 'autoreg' in args:
-            self.logger.debug("autoreg statement,length: %s,%s", args['autoreg'], len(args['autoreg']))
-            code += "autoreg %s;\n" % (args['autoreg'])
-        if 'bayes' in args:
-            self.logger.debug("bayes statement,length: %s,%s", args['bayes'], len(args['bayes']))
-            code += "bayes %s;\n" % (args['bayes'])
-        if 'blockseason' in args:
-            self.logger.debug("blockseason statement,length: %s,%s", args['blockseason'], len(args['blockseason']))
-            code += "blockseason %s;\n" % (args['blockseason'])
-        if 'by' in args:
-            self.logger.debug("by statement,length: %s,%s", args['by'], len(args['by']))
-            code += "by %s;\n" % (args['by'])
-        if 'cdfplot' in args:
-            self.logger.debug("cdfplot statement,length: %s,%s", args['cdfplot'], len(args['cdfplot']))
-            code += "cdfplot %s;\n" % (args['cdfplot'])
-        if 'cls' in args:
-            if isinstance(args['cls'], str):
-                self.logger.debug("class statement,length: %s,%s", args['cls'], len(args['cls']))
-                code += "class %s;\n" % (args['cls'])
-            elif isinstance(args['cls'], list):
-                code += "class %s;\n" % (' '.join(args['cls']))
-        if 'code' in args:
-            self.logger.debug("code statement,length: %s,%s", args['code'], len(args['code']))
-            code += "code file='%s';\n" % (args['code'])
-        # The save statement is used by few procs but it doesn't have a consistent pattern
-        # Here we case it correctly or throw an error.
-        if 'comphist' in args:
-            self.logger.debug("comphistogram statement,length: %s,%s", args['comphist'], len(args['comphist']))
-            code += "comphist %s;\n" % (args['comphist'])
-        # contrast moved
-        if 'corr' in args:
-            self.logger.debug("corr statement,length: %s,%s", args['corr'], len(args['corr']))
-            code += "corr %s;\n" % (args['corr'])
-        if 'crosscorr' in args:
-            self.logger.debug("crosscorr statement,length: %s,%s", args['crosscorr'], len(args['crosscorr']))
-            code += "crosscorr %s;\n" % (args['crosscorr'])
-        if 'crossvar' in args:
-            self.logger.debug("crossvar statement,length: %s,%s", args['crossvar'], len(args['crossvar']))
-            code += "crossvar %s;\n" % (args['crossvar'])
-        if 'cycle' in args:
-            self.logger.debug("cycle statement,length: %s,%s", args['cycle'], len(args['cycle']))
-            code += "cycle %s;\n" % (args['cycle'])
-        if 'decomp' in args:
-            self.logger.debug("decomp statement,length: %s,%s", args['decomp'], len(args['decomp']))
-            code += "decomp %s;\n" % (args['decomp'])
-        if 'deplag' in args:
-            self.logger.debug("deplag statement,length: %s,%s", args['deplag'], len(args['deplag']))
-            code += "deplag %s;\n" % (args['deplag'])
-        if 'effect' in args:
-            self.logger.debug("effect statement,length: %s,%s", args['effect'], len(args['effect']))
-            code += "effect %s;\n" % (args['effect'])
-        # estimate moved
-        if 'fcmport' in args:
-            self.logger.debug("fcmport statement,length: %s,%s", args['fcmport'], len(args['fcmport']))
-            code += "fcmport %s;\n" % (args['fcmport'])
-        if 'freq' in args:
-            # add check to make sure it is only one variable
-            self.logger.debug("freq statement,length: %s,%s", args['freq'], len(args['freq']))
-            # check to make sure it is only one variable
-            if len(args['freq'].split()) == 1:
-                code += "freq %s;\n" % (args['freq'])
-            else:
-                raise SyntaxError("ERROR in code submission. FREQ can only have one variable and you submitted: %s",
-                                  args['freq'])
-        if 'forecast' in args:
-            self.logger.debug("forecast statement,length: %s,%s", args['forecast'], len(args['forecast']))
-            code += "forecast %s;\n" % (args['forecast'])
-        # handle a string or list of strings
-        if 'hidden' in args:
-            if isinstance(args['hidden'], (str, int)):
-                self.logger.debug("hidden statement,length: %s,%s", str(args['hidden']), len(str(args['hidden'])))
-                code += "hidden %s;\n" % (str(args['hidden']))
-            else:
-                for item in args['hidden']:
-                    code += "hidden %s;\n" % item
-        if 'id' in args:
-            self.logger.debug("id statement,length: %s,%s", args['id'], len(args['id']))
-            code += "id %s;\n" % (args['id'])
-        if 'histogram' in args:
-            self.logger.debug("histogram statement,length: %s,%s", args['histogram'], len(args['histogram']))
-            code += "histogram %s;\n" % (args['histogram'])
-        if 'hazardratio' in args:
-            self.logger.debug("hazardratio statement,length: %s,%s", args['hazardratio'], len(args['hazardratio']))
-            code += "hazardratio %s;\n" % (args['id'])
-        if 'identify' in args:
-            self.logger.debug("identify statement,length: %s,%s", args['identify'], len(args['identify']))
-            code += "identify %s;\n" % (args['identify'])
-        if 'impute' in args:
-            self.logger.debug("impute statement,length: %s,%s", args['impute'], len(args['impute']))
-            if not (isinstance(args['impute'], dict) or isinstance(args['impute'], str)):
-                raise SyntaxError("IMPUTE must be a dictionary: %s" % str(type(args['impute'])))
-            if isinstance(args['impute'], dict):
-                usedVars = []
-                tup_code = ''
-                contantValues = args['impute'].pop('value', None)
-                if contantValues is not None:
-                    if not all(isinstance(x, tuple) for x in contantValues):
-                        raise SyntaxError("The elements in the 'value' key must be tuples")
-                    for t in contantValues:
-                        tup_code += "impute %s / value = %s;\n" % (t[0], t[1])
-                        usedVars.append(t[0])
-                meth_code = ''
-                for key, values in args['impute'].items():
-                    for v in values:
-                        meth_code += 'impute %s / method = %s;\n' % (v, key)
-                        usedVars.append(v)
-                code += '\ninput ' + ' '.join(list(set(usedVars))) + ';\n' + tup_code + meth_code + 'run;'
-            elif isinstance(args['impute'], str):
-                code += "impute %s;\n" % (args['impute'])
-        if 'input' in args:
-            if isinstance(args['input'], str):
-                self.logger.debug("input statement,length: %s,%s", args['input'], len(args['input']))
-                code += "input %s;\n" % (args['input'])
-            elif isinstance(args['input'], dict):
-                try:
-                    # fix var type names for HPNEURAL
-                    nomstr = 'nominal'
-                    intstr = 'interval'
-                    if objtype.casefold() =='hpneural':
-                        nomstr = 'nom'
-                        intstr = 'int'
-                    if 'interval' in args['input'].keys():
-                        if isinstance(args['input']['interval'], str):
-                            code += "input %s /level=%s;\n" % (args['input']['interval'], intstr)
-                        if isinstance(args['input']['interval'], list):
-                            code += "input %s /level=%s;\n" % (" ".join(args['input']['interval']), intstr )
-                    if 'nominal' in args['input'].keys():
-                        if isinstance(args['input']['nominal'], str):
-                            code += "input %s /level=%s;\n" % (args['input']['nominal'], nomstr)
-                        if isinstance(args['input']['nominal'], list):
-                            code += "input %s /level=%s;\n" % (" ".join(args['input']['nominal']), nomstr)
-                except:
-                    raise SyntaxError("Proper Keys not found for INPUT dictionary: %s" % args['input'].keys())
-            elif isinstance(args['input'], list):
-                if len(args['input']) == 1:
-                    code += "input %s;\n" % str(args['input'][0])
-                elif len(args['input']) > 1:
-                    code += "input %s;\n" % " ".join(args['input'])
-                else:
-                    raise SyntaxError("The input list has no members")
-            else:
-                raise SyntaxError("INPUT is in an unknown format: %s" % str(args['input']))
-        if 'inset' in args:
-            self.logger.debug("inset statement,length: %s,%s", args['inset'], len(args['inset']))
-            code += "inset %s;\n" % (args['inset'])
-        if 'intervals' in args:
-            self.logger.debug("intervals statement,length: %s,%s", args['intervals'], len(args['intervals']))
-            code += "intervals %s;\n" % (args['intervals'])
-        if 'irregular' in args:
-            if isinstance(args['irregular'], str):
-                self.logger.debug("irregular statement,length: %s,%s", args['irregular'], len(args['irregular']))
-                code += "irregular %s;\n" % (args['irregular'])
-            elif isinstance(args['irregular'], bool) and args['irregular']:
-                code += "irregular;\n"
-            else:
-                raise SyntaxError("irregular is in an unknown format: %s" % str(args['irregular']))
-        if 'level' in args:
-            if isinstance(args['level'], str):
-                self.logger.debug("level statement,length: %s,%s", args['level'], len(args['level']))
-                code += "level %s;\n" % (args['level'])
-            elif isinstance(args['level'], bool) and args['level']:
-                code += "level;\n"
-            else:
-                raise SyntaxError("level is in an unknown format: %s" % str(args['level']))
-        # lsmeans moved
-        # manova moved
-        # means moved
-        if 'model' in args:
-            self.logger.debug("model statement,length: %s,%s", args['model'], len(args['model']))
-            code += "model %s;\n" % (args['model'])
-        if 'contrast' in args:
-            self.logger.debug("contrast statement,length: %s,%s", args['contrast'], len(args['contrast']))
-            code += "contrast %s;\n" % (args['contrast'])
-        if 'estimate' in args:
-            if isinstance(args['estimate'], str):
-                self.logger.debug("estimate statement,length: %s,%s", args['estimate'], len(args['estimate']))
-                code += "estimate %s;\n" % (args['estimate'])
-            elif isinstance(args['estimate'], bool) and args['estimate']:
-                code += "estimate;\n"
-            else:
-                raise SyntaxError("estimate is in an unknown format: %s" % str(args['estimate']))
-        if 'lsmeans' in args:
-            self.logger.debug("lsmeans statement,length: %s,%s", args['lsmeans'], len(args['lsmeans']))
-            code += "lsmeans %s;\n" % (args['lsmeans'])
-        if 'lsmestimate' in args:
-            self.logger.debug("lsmestimate statement,length: %s,%s", args['lsmestimate'], len(args['lsmestimate']))
-            code += "lsmestimate %s;\n" % (args['lsmestimate'])
-        if 'test' in args:
-            self.logger.debug("test statement,length: %s,%s", args['test'], len(args['test']))
-            code += "test %s;\n" % (args['test'])
-        if 'manova' in args:
-            self.logger.debug("manova statement,length: %s,%s", args['manova'], len(args['manova']))
-            code += "manova %s;\n" % (args['manova'])
-        if 'means' in args:
-            self.logger.debug("means statement,length: %s,%s", args['means'], len(args['means']))
-            code += "means %s;\n" % (args['means'])
-        if 'nloptions' in args:
-            self.logger.debug("nloptions statement,length: %s,%s", args['nloptions'], len(args['nloptions']))
-            code += "nloptions %s;\n" % (args['nloptions'])
-        if 'oddsratio' in args:
-            self.logger.debug("oddsratio statement,length: %s,%s", args['oddsratio'], len(args['oddsratio']))
-            code += "oddsratio %s;\n" % (args['oddsratio'])
-        if 'outarrays' in args:
-            self.logger.debug("outarrays statement,length: %s,%s", args['outarrays'], len(args['outarrays']))
-            code += "outarrays %s;\n" % (args['outarrays'])
-        if 'outscalars' in args:
-            self.logger.debug("outscalars statement,length: %s,%s", args['outscalars'], len(args['outscalars']))
-            code += "outscalars %s;\n" % (args['outscalars'])
-        if 'outlier' in args:
-            self.logger.debug("outlier statement,length: %s,%s", args['outlier'], len(args['outlier']))
-            code += "outlier %s;\n" % (args['outlier'])
-        if 'paired' in args:
-            if isinstance(args['paired'], str):
-                self.logger.debug("paired statement,length: %s,%s", args['paired'], len(args['paired']))
-                code += "paired %s;\n" % (args['paired'])
-            elif isinstance(args['paired'], list):
-                if len(args['paired']) == 1:
-                    code += "paired %s;\n" % str(args['paired'][0])
-                elif len(args['paired']) > 1:
-                    code += "paired %s;\n" % " ".join(args['paired'])
-                else:
-                    raise SyntaxError("The paired list has no members")
-            else:
-                raise SyntaxError("paired is in an unknown format: %s" % str(args['paired']))
-        if 'parms' in args:
-            self.logger.debug("parms statement,length: %s,%s", args['parms'], len(args['parms']))
-            code += "parms %s;\n" % (args['parms'])
-        if 'partial' in args:
-            self.logger.debug("partial statement,length: %s,%s", args['partial'], len(args['partial']))
-            code += "partial %s;\n" % (args['partial'])
-        if 'pathdiagram' in args:
-            self.logger.debug("pathdiagram statement,length: %s,%s", args['pathdiagram'], len(args['pathdiagram']))
-            code += "pathdiagram %s;\n" % (args['pathdiagram'])
-        if 'performance' in args:
-            self.logger.debug("performance statement,length: %s,%s", args['performance'], len(args['performance']))
-            code += "performance %s;\n" % (args['performance'])
-        if 'ppplot' in args:
-            self.logger.debug("ppplot statement,length: %s,%s", args['ppplot'], len(args['ppplot']))
-            code += "ppplot %s;\n" % (args['ppplot'])
-        if 'prior' in args:
-            # TODO: check that distribution is in the list
-            self.logger.debug("prior statement,length: %s,%s", args['prior'], len(args['prior']))
-            code += "prior %s;\n" % (args['prior'])
-        if 'priors' in args:
-            if isinstance(args['priors'], str):
-                self.logger.debug("priors statement,length: %s,%s", args['priors'], len(args['priors']))
-                code += "priors %s;\n" % (args['priors'])
-            elif isinstance(args['priors'], list):
-                if len(args['priors']) == 1:
-                    code += "priors %s;\n" % str(args['priors'][0])
-                elif len(args['priors']) > 1:
-                    code += "priors %s;\n" % " ".join(args['priors'])
-                else:
-                    raise SyntaxError("The priors list has no members")
-            else:
-                raise SyntaxError("priors is in an unknown format: %s" % str(args['priors']))
-        if 'prog_stmts' in args:
-            self.logger.debug("prog_stmts statement,length: %s,%s", args['prog_stmts'], len(args['prog_stmts']))
-            code += " %s;\n" % (args['prog_stmts'])
-        if 'probplot' in args:
-            self.logger.debug("probplot statement,length: %s,%s", args['probplot'], len(args['probplot']))
-            code += "probplot %s;\n" % (args['probplot'])
-        if 'qqplot' in args:
-            self.logger.debug("qqplot statement,length: %s,%s", args['qqplot'], len(args['qqplot']))
-            code += "qqplot %s;\n" % (args['qqplot'])
-        if 'random' in args:
-            self.logger.debug("random statement,length: %s,%s", args['random'], len(args['random']))
-            code += "random %s;\n" % (args['random'])
-        if 'randomreg' in args:
-            self.logger.debug("randomreg statement,length: %s,%s", args['randomreg'], len(args['randomreg']))
-            code += "randomreg %s;\n" % (args['randomreg'])
-        if 'repeated' in args:
-            self.logger.debug("repeated statement,length: %s,%s", args['repeated'], len(args['repeated']))
-            code += "repeated %s;\n" % (args['repeated'])
-        if 'roc' in args:
-            self.logger.debug("roc statement,length: %s,%s", args['roc'], len(args['roc']))
-            code += "roc %s;\n" % (args['roc'])
-        if 'season' in args:
-            self.logger.debug("season statement,length: %s,%s", args['season'], len(args['season']))
-            code += "season %s;\n" % (args['season'])
-        if 'selection' in args:
-            if isinstance(args['selection'], str):
-                if args['selection'].lower().strip() in ['none', 'forward', 'backward', 'stepwise', 'forwardswap',
-                                                     'lar', 'lasso']:
-                    self.logger.debug("selection statement,length: %s,%s", args['selection'], len(args['selection']))
-                    code += "selection method=%s;\n" % (args['selection'])
-            if isinstance(args['selection'], dict):
-                if bool(args['selection']): # is the dictionary empty
-                    m = args['selection'].pop('method', '')
-                    me = args['selection'].pop('maxeffects', None)
-                    if me is not None:
-                        if int(me) > 0 and m != 'backward':
-                            args['selection']['maxeffects'] = me
-                    d = args['selection'].pop('details', '')
-                    dstr = ''
-                    if len(d) > 0:
-                        dstr = 'details = %s' % d  
-                    code += "selection method=%s (%s)  %s;"  % (m, ' '.join('{}={}'.format(key, val) for key, val in args['selection'].items()), dstr)
-        if 'slope' in args:
-            if isinstance(args['slope'], str):
-                self.logger.debug("slope statement,length: %s,%s", args['slope'], len(args['slope']))
-                code += "slope %s;\n" % (args['slope'])
-            elif isinstance(args['slope'], bool) and args['slope']:
-                code += "slope;\n"
-            else:
-                raise SyntaxError("slope is in an unknown format: %s" % str(args['slope']))
-        if 'splinereg' in args:
-            self.logger.debug("splinereg statement,length: %s,%s", args['splinereg'], len(args['splinereg']))
-            code += "splinereg %s;\n" % (args['splinereg'])
-        if 'splineseason' in args:
-            self.logger.debug("splineseason statement,length: %s,%s", args['splineseason'], len(args['splineseason']))
-            code += "splineseason %s;\n" % (args['splineseason'])
-        if 'store' in args:
-            self.logger.debug("store statement,length: %s,%s", args['store'], len(args['store']))
-            code += "store %s;\n" % (args['store'])
-        if 'trend' in args:
-            self.logger.debug("trend statement,length: %s,%s", args['trend'], len(args['trend']))
-            code += "trend %s;\n" % (args['trend'])
-        if 'slice' in args:
-            self.logger.debug("slice statement,length: %s,%s", args['slice'], len(args['slice']))
-            code += "slice %s;\n" % (args['slice'])
-        if 'spec' in args:
-            self.logger.debug("spec statement,length: %s,%s", args['spec'], len(args['spec']))
-            code += "spec %s;\n" % (args['spec'])
-        if 'strata' in args:
-            self.logger.debug("strata statement,length: %s,%s", args['strata'], len(args['strata']))
-            code += "strata %s;\n" % (args['strata'])
-        if 'target' in args:
-            self.logger.debug("target statement,length: %s,%s", args['target'], len(args['target']))
-            # make sure target is a single variable extra split to account for level= option
-            if isinstance(args['target'], str):
-                if len(args['target'].split('/')[0].split()) == 1:
-                    code += "target %s;\n" % (args['target'])
-                else:
-                    raise SyntaxError(
-                        "ERROR in code submission. TARGET can only have one variable and you submitted: %s" % args[
-                            'target'])
-            elif isinstance(args['target'], list):
-                if len(args['target']) == 1:
-                    code += "target %s;\n" % str(args['input'][0])
-                else:
-                    raise SyntaxError("The target list must have exactly one member")
-            elif isinstance(args['target'], dict):
-                try:
-                    # check there there is only one target:
-                    length=0
-                    try:
-                        length += len([args['target']['nominal'], args['target']['interval'] ])
-                    except KeyError:
-                        try:
-                            length += len([args['target']['nominal']])
-                        except KeyError:
-                            try:
-                                length += len([args['target']['interval']])
-                            except KeyError:
-                                raise
-                    if length  == 1:
-                        # fix var type names for HPNEURAL
-                        nomstr = 'nominal'
-                        intstr = 'interval'
-                        targOpts = ''
-                        try:
-                            targOpts = ' '.join('{}={}'.format(key, val) for key, val in args['target']['targOpts'].items())
-                        except:
-                            pass
-                        if objtype.casefold() == 'hpneural':
-                            nomstr = 'nom'
-                            intstr = 'int'
-                        if 'interval' in args['target'].keys():
-                            if isinstance(args['target']['interval'], str):
-                                code += "target %s /level=%s %s;\n" % (args['target']['interval'], intstr, targOpts)
-                            if isinstance(args['target']['interval'], list):
-                                code += "target %s /level=%s %s;\n" % (" ".join(args['target']['interval']), intstr, targOpts)
-                        if 'nominal' in args['target'].keys():
-                            if isinstance(args['target']['nominal'], str):
-                                code += "target %s /level=%s;\n" % (args['target']['nominal'], nomstr)
-                            if isinstance(args['target']['nominal'], list):
-                                code += "target %s /level=%s;\n" % (" ".join(args['target']['nominal']), nomstr)
-                    else:
-                        raise SyntaxError
-                except SyntaxError:
-                    print("SyntaxError: TARGET can only have one variable")
-                except KeyError:
-                    print("KeyError: Proper keys not found for TARGET dictionary: %s" % args['target'].keys())
-            else:
-                raise SyntaxError("TARGET is in an unknown format: %s" % str(args['target']))
-        if 'train' in args:
-            if isinstance(args['train'], dict):
-                try:
-                    if all (k in args['train'] for k in ("numtries", "maxiter")):
-                        code += "train numtries=%s maxiter=%s;\n" % (args['train']["numtries"], args['train']["maxiter"])
-                except:
-                    raise SyntaxError("Proper Keys not found for TRAIN dictionary: %s" % args['train'].keys())
-            else:
-                self.logger.debug("train statement,length: %s,%s", args['train'], len(args['train']))
-                code += "train %s;\n" % (args['train'])
-        # test moved
-        if 'var' in args:
-            self.logger.debug("var statement,length: %s,%s", args['var'], len(args['var']))
-            code += "var %s;\n" % (args['var'])
-        if 'weight' in args:
-            self.logger.debug("weight statement,length: %s,%s", args['weight'], len(args['weight']))
-            # check to make sure it is only one variable
-            if len(args['weight'].split()) == 1:
-                code += "weight %s;\n" % (args['weight'])
-            else:
-                raise SyntaxError("ERROR in code submission. WEIGHT can only have one variable and you submitted: %s",
-                                  args['weight'])
-        if 'grow' in args:
-            self.logger.debug("grow statement,length: %s,%s", args['grow'], len(args['grow']))
-            code += "grow %s;\n" % (args['grow'])
-        if 'prune' in args:
-            self.logger.debug("prune statement,length: %s,%s", args['prune'], len(args['prune']))
-            code += "prune %s;\n" % (args['prune'])
-        if 'rules' in args:
-            self.logger.debug("rules statement,length: %s,%s", args['rules'], len(args['rules']))
-            code += "rules %s;\n" % (args['rules'])
-        if 'partition' in args:
-            self.logger.debug("partition statement,length: %s,%s", args['partition'], len(args['partition']))
-            code += "partition %s;\n" % (args['partition'])
-        if 'out' in args and not len(outmeth):
-            if not isinstance(args['out'], dict):
-                outds = args['out']
-                outstr = outds.libref + '.' + outds.table
-                code += "output out=%s;\n" % outstr
-            else:
-                t = args['out'].pop("table", None)
-                l = args['out'].pop("libref", None)
-                d = args['out'].pop("data", None)
-                if t and l:
-                    outstr = l + '.' + t
-                elif d:
-                    outstr = d.libref + '.' + d.table
-                else:
-                    raise SyntaxError("OUT statement is not in a recognized form either {'libname':'foo', 'table':'bar'} or {'data':'sasdataobject'}  %s" % str(objtype))
 
-                varlist = ' '.join('{}={}'.format(key, val) for key, val in args['out'].items())
-                code += "output out=%s %s;\n" % (outstr, varlist)
+        keywords = (key for key in SASProcCommons._getKeywords() if key in args
+                            or (isinstance(key, tuple) and key[0] in args))
 
-        if 'xchart' in args:
-            self.logger.debug("xchart statement,length: %s,%s", args['xchart'], len(args['xchart']))
-            code += "xchart %s;\n" % (args['xchart'])
-        if 'score' in args:
-            if isinstance(args['score'], str):
-                code += "score %s;\n" % args['score']
+        # change keys to strings explicitly
+        vars = {"product": product, "objname":objname, "objtype":objtype, "args":args, "data":data}
+        for keyword in keywords:
+            if isinstance(keyword, tuple):
+                # We have something that requires special handling
+                code += keyword[1](keyword[0], **vars)
             else:
-                scoreds = args['score']
-                if objtype.upper() == "HP4SCORE":
-                   f = scoreds.get('file')
-                   d = scoreds.get('out')
-                   o = d.libref+'.'+d.table
-                   code += "score file='"+f+"' out="+o+";\n"
-                elif objtype.upper() == 'TPSPLINE':
-                   code += "score data=%s.%s out=%s.%s;\n" % (data.libref, data.table, scoreds.libref, scoreds.table)
-                else:
-                   code += "score out=%s.%s;\n" % (scoreds.libref, scoreds.table)
-        # save statement must be after input and target for TREEBOOST
-        if 'save' in args:
-            #self.logger.debug("save statement,length: %s,%s", args['save'], len(args['save']))
-            if objtype=="hpforest":
-                code += "save file='%s';\n" % (args['save'])
-            elif objtype=="treeboost":
-                if isinstance(args['save'], bool):
-                    libref=objname
-                    code += "save fit=%s.%s importance=%s.%s model=%s.%s nodestats=%s.%s rules=%s.%s;\n" % \
-                            (libref, "fit", libref, "importance", libref, "model",
-                             libref, "nodestats", libref, "rules" )
-                elif isinstance(args['save'], dict):
-                    code += "save %s ;"  % ' '.join('{}={}'.format(key, val) for key, val in args['save'].items())
-                else:
-                    raise SyntaxError("SAVE statement object type is not recognized, must be a bool or dict. You provided: %s" % str(type(save)))
-            else:
-                raise SyntaxError("SAVE statement is not recognized for this procedure: %s" % str(objtype))
+                code += SASProcCommons._genCode(keyword, **vars)
+
+
 
         # passthrough facility for procedures with special circumstances
         if 'stmtpassthrough' in args:
@@ -601,7 +245,7 @@ class SASProcCommons:
 
         code += "run; quit; %mend;\n"
         code += "%%mangobj(%s,%s,%s);" % (objname, objtype, data.table)
-        self.logger.debug("Proc code submission: " + str(code))
+        product.logger.debug("Proc code submission: " + str(code))
         return code
 
     def _objectmethods(self, obj: str, *args) -> list:
@@ -627,7 +271,8 @@ class SASProcCommons:
         return objlist
 
 
-    def _charlist(self, data) -> list:
+    @staticmethod
+    def _charlist(product, data) -> list:
         """
         Private method to return the variables in a SAS Data set that are of type char
 
@@ -650,10 +295,10 @@ class SASProcCommons:
         run;
         """
         # ignore teach_me_SAS mode to run contents
-        nosub = self.sas.nosub
-        self.sas.nosub = False
-        ll = self.sas.submit(char_string.format(data.libref, data.table + data._dsopts()))
-        self.sas.nosub = nosub
+        nosub = product.sas.nosub
+        product.sas.nosub = False
+        ll = product.sas.submit(char_string.format(data.libref, data.table + data._dsopts()))
+        product.sas.nosub = nosub
         l2 = ll['LOG'].partition("VARLIST=\n")
         l2 = l2[2].rpartition("VARLISTend=\n")
         charlist1 = l2[0].split("\n")
@@ -661,7 +306,8 @@ class SASProcCommons:
         charlist1 = [x.casefold() for x in charlist1]
         return charlist1
 
-    def _processNominals(self, kwargs, data):
+    @staticmethod
+    def _processNominals(product, kwargs, data):
         nom = kwargs.pop('nominals', None)
         inputs = kwargs.pop('input', None)
         tgt = kwargs.pop('target', None)
@@ -669,10 +315,10 @@ class SASProcCommons:
 
         # get char variables and nominals list if it exists
         if nom is None:
-            dsnom = SASProcCommons._charlist(self, data)
+            dsnom = SASProcCommons._charlist(product, data)
         elif isinstance(nom, list):
             nom = [x.casefold() for x in nom]
-            dsnom = list(set(SASProcCommons._charlist(self, data)) | set(nom))
+            dsnom = list(set(SASProcCommons._charlist(product, data)) | set(nom))
         else:
             raise SyntaxWarning('nominals must be list type. You gave %s.' % str(type(nom)))
         if tgt is not None:
@@ -757,7 +403,8 @@ class SASProcCommons:
                 raise SyntaxError("input must be a string, list, or dictionary you provided: %s" % str(type(inputs)))
         return kwargs
 
-    def _target_stmt(self, stmt: object) -> tuple:
+    @staticmethod
+    def _target_stmt(stmt: object) -> tuple:
         """
         takes the target key from kwargs and processes it to aid in the generation of a model statement
         :param stmt: str, list, or dict that contains the model information.
@@ -815,7 +462,8 @@ class SASProcCommons:
             raise SyntaxError("TARGET is in an unknown format: %s" % str(stmt))
         return (code, cls)
 
-    def _input_stmt(self, stmt: object) -> tuple:
+    @staticmethod
+    def _input_stmt(stmt: object) -> tuple:
         """
         takes the input key from kwargs and processes it to aid in the generation of a model statement
         :param stmt: str, list, or dict that contains the model information.
@@ -852,11 +500,12 @@ class SASProcCommons:
             raise SyntaxError("INPUT is in an unknown format: %s" % str(stmt))
         return (code, cls)
 
-    def _run_proc(self, procname: str, required_set: set, legal_set: set, **kwargs: dict):
+    @staticmethod
+    def _run_proc(product, procname: str, required_set: set, legal_set: set, **kwargs: dict):
         """
         This internal method takes the options and statements from the PROC and generates
         the code needed to submit it to SAS. It then submits the code.
-        :param self:
+        :param product:
         :param procname: str
         :param required_set: set of options
         :param legal_set: set of valid options
@@ -866,35 +515,35 @@ class SASProcCommons:
         data = kwargs.pop('data', None)
         objtype = procname.lower()
         if 'model' not in kwargs.keys():
-            kwargs = SASProcCommons._processNominals(self, kwargs, data)
+            kwargs = SASProcCommons._processNominals(product, kwargs, data)
             if 'model' in required_set:
                 tcls_str = ''
                 icls_str = ''
-                t_str, tcls_str = SASProcCommons._target_stmt(self, kwargs['target'])
-                i_str, icls_str = SASProcCommons._input_stmt(self, kwargs['input'])
+                t_str, tcls_str = SASProcCommons._target_stmt(kwargs['target'])
+                i_str, icls_str = SASProcCommons._input_stmt(kwargs['input'])
 
                 kwargs['model'] = str(t_str + ' = ' + i_str )
                 kwargs['cls'] = str(tcls_str + " " + icls_str)
-        verifiedKwargs = SASProcCommons._stmt_check(self, required_set, legal_set, kwargs)
+        verifiedKwargs = SASProcCommons._stmt_check(product, required_set, legal_set, kwargs)
         obj1 = []
         nosub = False
         objname = ''
         log = ''
         if len(verifiedKwargs):
-            objname = procname[:3].lower() + self.sas._objcnt()  # translate to a libname so needs to be less than 8
-            code = SASProcCommons._makeProcCallMacro(self, objtype, objname, data, verifiedKwargs)
-            self.logger.debug(procname + " macro submission: " + str(code))
-            if not self.sas.nosub:
-                ll = self.sas.submit(code, "text")
+            objname = procname[:3].lower() + product.sas._objcnt()  # translate to a libname so needs to be less than 8
+            code = SASProcCommons._makeProcCallMacro(product, objtype, objname, data, verifiedKwargs)
+            product.logger.debug(procname + " macro submission: " + str(code))
+            if not product.sas.nosub:
+                ll = product.sas.submit(code, "text")
                 log = ll['LOG']
                 error = SASProcCommons._errorLog(log)
                 isinstance(error, str)
                 if len(error) > 1:
                     RuntimeWarning("ERRORS found in SAS log: \n%s" % error)
-                    return SASresults(obj1, self.sas, objname, nosub, log)
+                    return SASresults(obj1, product.sas, objname, nosub, log)
                 try:
-                    obj1 = SASProcCommons._objectmethods(self, objname)
-                    self.logger.debug(obj1)
+                    obj1 = SASProcCommons._objectmethods(product, objname)
+                    product.logger.debug(obj1)
                 except Exception:
                     pass
             else:
@@ -902,7 +551,7 @@ class SASProcCommons:
                 nosub = True
         else:
             RuntimeWarning("Error in code submission")
-        return SASresults(obj1, self.sas, objname, nosub, log)
+        return SASresults(obj1, product.sas, objname, nosub, log)
 
     @staticmethod
     def _stmt_check(self, req: set, legal: set, stmt: dict) -> dict:
@@ -944,3 +593,287 @@ class SASProcCommons:
                     stmt.pop(item, None)
                 SyntaxWarning("The following %d statements are invalid and will be ignored:\nextraSet " % len(extraSet))
         return stmt
+
+
+class _SpecialKeywords:
+    @staticmethod
+    def _architecture_key(key, **kwargs):
+        args = kwargs["args"]
+        product = kwargs["product"]
+        product.logger.debug("architecture statement,length: %s,%s", args['architecture'], len(args['architecture']))
+        if args['architecture'].lower().strip() in ['logistic', 'mlp', 'mlp direct']:
+            return "architecture %s;\n" % (args['architecture'])
+        else:
+            raise ValueError("Architecture may only have values ['logistic', 'mlp', 'mlp direct'], recieved '%s' instead.")
+
+    @staticmethod
+    def _impute_key(key, **kwargs):
+        args = kwargs["args"]
+        product = kwargs["product"]
+        code = ""
+        product.logger.debug("impute statement,length: %s,%s", args['impute'], len(args['impute']))
+        if not (isinstance(args['impute'], dict) or isinstance(args['impute'], str)):
+            raise SyntaxError("IMPUTE must be a dictionary: %s" % str(type(args['impute'])))
+        if isinstance(args['impute'], dict):
+            usedVars = []
+            tup_code = ''
+            contantValues = args['impute'].pop('value', None)
+            if contantValues is not None:
+                if not all(isinstance(x, tuple) for x in contantValues):
+                    raise SyntaxError("The elements in the 'value' key must be tuples")
+                for t in contantValues:
+                    tup_code += "impute %s / value = %s;\n" % (t[0], t[1])
+                    usedVars.append(t[0])
+            meth_code = ''
+            for key, values in args['impute'].items():
+                for v in values:
+                    meth_code += 'impute %s / method = %s;\n' % (v, key)
+                    usedVars.append(v)
+            code += '\ninput ' + ' '.join(list(set(usedVars))) + ';\n' + tup_code + meth_code + 'run;'
+        elif isinstance(args['impute'], str):
+            code += "impute %s;\n" % (args['impute'])
+
+        return code
+    
+    @staticmethod
+    def _input_key(key, **kwargs):
+        args = kwargs["args"]
+        product = kwargs["product"]
+        code = ""
+        if isinstance(args['input'], str):
+            product.logger.debug("input statement,length: %s,%s", kwargs["args"]['input'], len(kwargs["args"]['input']))
+            code += "input %s;\n" % (kwargs["args"]['input'])
+        elif isinstance(kwargs["args"]['input'], dict):
+            try:
+                # fix var type names for HPNEURAL
+                nomstr = 'nominal'
+                intstr = 'interval'
+                if kwargs["objtype"].casefold() =='hpneural':
+                    nomstr = 'nom'
+                    intstr = 'int'
+                if 'interval' in args['input'].keys():
+                    if isinstance(args['input']['interval'], str):
+                        code += "input %s /level=%s;\n" % (kwargs["args"]['input']['interval'], intstr)
+                    if isinstance(args['input']['interval'], list):
+                        code += "input %s /level=%s;\n" % (" ".join(kwargs["args"]['input']['interval']), intstr )
+                if 'nominal' in kwargs["args"]['input'].keys():
+                    if isinstance(kwargs["args"]['input']['nominal'], str):
+                        code += "input %s /level=%s;\n" % (kwargs["args"]['input']['nominal'], nomstr)
+                    if isinstance(kwargs["args"]['input']['nominal'], list):
+                        code += "input %s /level=%s;\n" % (" ".join(kwargs["args"]['input']['nominal']), nomstr)
+            except:
+                raise SyntaxError("Proper Keys not found for INPUT dictionary: %s" % kwargs["args"]['input'].keys())
+        elif isinstance(kwargs["args"]['input'], list):
+            if len(kwargs["args"]['input']) == 1:
+                code += "input %s;\n" % str(kwargs["args"]['input'][0])
+            elif len(kwargs["args"]['input']) > 1:
+                code += "input %s;\n" % " ".join(kwargs["args"]['input'])
+            else:
+                raise SyntaxError("The input list has no members")
+        else:
+            raise SyntaxError("INPUT is in an unknown format: %s" % str(kwargs["args"]['input']))
+        return code
+
+    @staticmethod
+    def _priors_key(key, **kwargs):
+        args = kwargs["args"]
+        product = kwargs["product"]
+        code = ""
+        if isinstance(args['priors'], str):
+            product.logger.debug("priors statement,length: %s,%s", args['priors'], len(args['priors']))
+            code += "priors %s;\n" % (args['priors'])
+        elif isinstance(args['priors'], list):
+            if len(args['priors']) == 1:
+                code += "priors %s;\n" % str(args['priors'][0])
+            elif len(args['priors']) > 1:
+                code += "priors %s;\n" % " ".join(args['priors'])
+            else:
+                raise SyntaxError("The priors list has no members")
+        else:
+            raise SyntaxError("priors is in an unknown format: %s" % str(args['priors']))
+        return code
+
+    @staticmethod
+    def _selection_key(key, **kwargs):
+        args = kwargs["args"]
+        product = kwargs["product"]
+        code = ""
+        if isinstance(args['selection'], str):
+            if args['selection'].lower().strip() in ['none', 'forward', 'backward', 'stepwise', 'forwardswap',
+                                                     'lar', 'lasso']:
+                product.logger.debug("selection statement,length: %s,%s", args['selection'], len(args['selection']))
+                code += "selection method=%s;\n" % (args['selection'])
+        elif isinstance(args['selection'], dict):
+            if bool(args['selection']): # is the dictionary empty
+                m = args['selection'].pop('method', '')
+                me = args['selection'].pop('maxeffects', None)
+                if me is not None:
+                    if int(me) > 0 and m != 'backward':
+                        args['selection']['maxeffects'] = me
+                d = args['selection'].pop('details', '')
+                dstr = ''
+                if len(d) > 0:
+                    dstr = 'details = %s' % d
+                code += "selection method=%s (%s)  %s;" % (m, ' '.join('{}={}'.format(key, val) for key, val in args['selection'].items()), dstr)
+        return code
+
+
+    @staticmethod
+    def _target_key(key, **kwargs):
+        args = kwargs["args"]
+        product = kwargs["product"]
+        objtype = kwargs["objtype"]
+        code = ""
+
+        product.logger.debug("target statement,length: %s,%s", args['target'], len(args['target']))
+        # make sure target is a single variable extra split to account for level= option
+        if isinstance(args['target'], str):
+            if len(args['target'].split('/')[0].split()) == 1:
+                code += "target %s;\n" % (args['target'])
+            else:
+                raise SyntaxError(
+                    "ERROR in code submission. TARGET can only have one variable and you submitted: %s" % args[
+                        'target'])
+        elif isinstance(args['target'], list):
+            if len(args['target']) == 1:
+                code += "target %s;\n" % str(args['input'][0])
+            else:
+                raise SyntaxError("The target list must have exactly one member")
+        elif isinstance(args['target'], dict):
+            try:
+                # check there there is only one target:
+                length=0
+                try:
+                    length += len([args['target']['nominal'], args['target']['interval'] ])
+                except KeyError:
+                    try:
+                        length += len([args['target']['nominal']])
+                    except KeyError:
+                        try:
+                            length += len([args['target']['interval']])
+                        except KeyError:
+                            raise
+                if length  == 1:
+                    # fix var type names for HPNEURAL
+                    nomstr = 'nominal'
+                    intstr = 'interval'
+                    targOpts = ''
+                    try:
+                        targOpts = ' '.join('{}={}'.format(key, val) for key, val in args['target']['targOpts'].items())
+                    except:
+                        pass
+                    if objtype.casefold() == 'hpneural':
+                        nomstr = 'nom'
+                        intstr = 'int'
+                    if 'interval' in args['target'].keys():
+                        if isinstance(args['target']['interval'], str):
+                            code += "target %s /level=%s %s;\n" % (args['target']['interval'], intstr, targOpts)
+                        if isinstance(args['target']['interval'], list):
+                            code += "target %s /level=%s %s;\n" % (" ".join(args['target']['interval']), intstr, targOpts)
+                    if 'nominal' in args['target'].keys():
+                        if isinstance(args['target']['nominal'], str):
+                            code += "target %s /level=%s;\n" % (args['target']['nominal'], nomstr)
+                        if isinstance(args['target']['nominal'], list):
+                            code += "target %s /level=%s;\n" % (" ".join(args['target']['nominal']), nomstr)
+                else:
+                    raise SyntaxError
+            except SyntaxError:
+                print("SyntaxError: TARGET can only have one variable")
+            except KeyError:
+                print("KeyError: Proper keys not found for TARGET dictionary: %s" % args['target'].keys())
+        else:
+            raise SyntaxError("TARGET is in an unknown format: %s" % str(args['target']))
+        return code
+
+
+    @staticmethod
+    def _train_key(key, **kwargs):
+        args = kwargs["args"]
+        product = kwargs["product"]
+        code = ""
+
+        if isinstance(args['train'], dict):
+            try:
+                if all (k in args['train'] for k in ("numtries", "maxiter")):
+                    code += "train numtries=%s maxiter=%s;\n" % (args['train']["numtries"], args['train']["maxiter"])
+            except:
+                raise SyntaxError("Proper Keys not found for TRAIN dictionary: %s" % args['train'].keys())
+        else:
+            product.logger.debug("train statement,length: %s,%s", args['train'], len(args['train']))
+            code += "train %s;\n" % (args['train'])
+        return code
+
+
+    @staticmethod
+    def _out_key(key, **kwargs):
+        args = kwargs["args"]
+        objtype = kwargs["objtype"]
+        code = ""
+
+        if not isinstance(args['out'], dict):
+            outds = args['out']
+            outstr = outds.libref + '.' + outds.table
+            code += "output out=%s;\n" % outstr
+        else:
+            t = args['out'].pop("table", None)
+            l = args['out'].pop("libref", None)
+            d = args['out'].pop("data", None)
+            if t and l:
+                outstr = l + '.' + t
+            elif d:
+                outstr = d.libref + '.' + d.table
+            else:
+                raise SyntaxError("OUT statement is not in a recognized form either {'libname':'foo', 'table':'bar'} or {'data':'sasdataobject'}  %s" % str(objtype))
+
+            varlist = ' '.join('{}={}'.format(key, val) for key, val in args['out'].items())
+            code += "output out=%s %s;\n" % (outstr, varlist)
+
+        return code
+
+    @staticmethod
+    def _score_key(key, **kwargs):
+        args = kwargs["args"]
+        objtype = kwargs["objtype"]
+        data = kwargs["data"]
+        code = ""
+
+        if isinstance(args['score'], str):
+            code += "score %s;\n" % args['score']
+        else:
+            scoreds = args['score']
+            if objtype.upper() == "HP4SCORE":
+                f = scoreds.get('file')
+                d = scoreds.get('out')
+                o = d.libref+'.'+d.table
+                code += "score file='"+f+"' out="+o+";\n"
+            elif objtype.upper() == 'TPSPLINE':
+                code += "score data=%s.%s out=%s.%s;\n" % (data.libref, data.table, scoreds.libref, scoreds.table)
+            else:
+                code += "score out=%s.%s;\n" % (scoreds.libref, scoreds.table)
+
+        return code
+
+    @staticmethod
+    def _save_key(key, **kwargs):
+        args = kwargs["args"]
+        product = kwargs["product"]
+        objtype = kwargs["objtype"]
+        objname = kwargs["objname"]
+        code = ""
+
+        product.logger.debug("save statement,length: %s,%s", args['save'], len(args['save']))
+        if objtype=="hpforest":
+            code += "save file='%s';\n" % (args['save'])
+        elif objtype=="treeboost":
+            if isinstance(args['save'], bool):
+                libref=objname
+                code += "save fit=%s.%s importance=%s.%s model=%s.%s nodestats=%s.%s rules=%s.%s;\n" % \
+                        (libref, "fit", libref, "importance", libref, "model",
+                         libref, "nodestats", libref, "rules" )
+            elif isinstance(args['save'], dict):
+                code += "save %s ;" % ' '.join('{}={}'.format(key, val) for key, val in args['save'].items())
+            else:
+                raise SyntaxError("SAVE statement object type is not recognized, must be a bool or dict. You provided: %s" % str(type(args["save"])))
+        else:
+            raise SyntaxError("SAVE statement is not recognized for this procedure: %s" % str(objtype))
+        return code
