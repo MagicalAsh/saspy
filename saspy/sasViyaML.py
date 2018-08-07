@@ -70,7 +70,7 @@ class SASViyaML:
         legal_set = {'freq', 'input', 'id', 'target', 'save', 'score', 'procopts'}
         # print ("I am HERE")
         logging.debug("kwargs type: " + str(type(kwargs)))
-        return SASProcCommons._run_proc("HPFOREST", required_set, legal_set, **kwargs)
+        return SASProcCommons._run_proc(self, "HPFOREST", required_set, legal_set, **kwargs)
 
     def forest(self, **kwargs: dict) -> object:
         """
@@ -87,7 +87,7 @@ class SASViyaML:
         required_set = {'input'}
         legal_set = {'freq', 'input', 'id', 'score', 'procopts'}
         logging.debug("kwargs type: " + str(type(kwargs)))
-        return SASProcCommons._run_proc("HPCLUS", required_set, legal_set, **kwargs)
+        return SASProcCommons._run_proc(self, "HPCLUS", required_set, legal_set, **kwargs)
 
     def gradboost(self, **kwargs: dict) -> object:
         """
@@ -104,7 +104,7 @@ class SASViyaML:
         required_set = {'input'}
         legal_set = {'freq', 'input', 'id', 'score', 'procopts'}
         logging.debug("kwargs type: " + str(type(kwargs)))
-        return SASProcCommons._run_proc("HPCLUS", required_set, legal_set, **kwargs)
+        return SASProcCommons._run_proc(self, "HPCLUS", required_set, legal_set, **kwargs)
 
     def nnet(self, **kwargs: dict) -> object:
         """
@@ -122,7 +122,7 @@ class SASViyaML:
         legal_set = {'freq', 'input', 'id', 'target', 'save', 'score',
                      'architecture', 'weight', 'hidden', 'partition', 'train', 'procopts'}
         logging.debug("kwargs type: " + str(type(kwargs)))
-        return SASProcCommons._run_proc("HPNEURAL", required_set, legal_set, **kwargs)
+        return SASProcCommons._run_proc(self, "HPNEURAL", required_set, legal_set, **kwargs)
 
     def svmachine(self, **kwargs: dict) -> object:
         """
@@ -133,7 +133,7 @@ class SASViyaML:
         :param kwargs: dict
         :return: SAS result object
         """
-        pass
+        raise NotImplementedError("Under Development")
 
     def textmine(self, **kwargs: dict) -> object:
         """
@@ -144,4 +144,4 @@ class SASViyaML:
         :param kwargs: dict
         :return: SAS result object
         """
-        pass
+        raise NotImplementedError("Under Development")
