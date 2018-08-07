@@ -99,9 +99,9 @@ os.environ["PATH"] += ';'+r'SSPIPATH'
    
    fd = open(cfgfile, 'w')
    fd.write(cfg)
-+   fd.close()
-+
-+   print("Generated configurations file: "+cfgfile+"\n")
-+   
-+if __name__ == "__main__":
-+   main(sys.argv)
+   fd.close()
+
+   print("Generated configurations file: "+cfgfile+"\n")
+
+if __name__ == "__main__":
+   main(sys.argv)
