@@ -103,6 +103,6 @@ os.environ["PATH"] += ';'+r'SSPIPATH'
    fd.close()
 
    print("Generated configurations file: "+cfgfile+"\n")
-   
+
 if __name__ == "__main__":
    main(sys.argv)
