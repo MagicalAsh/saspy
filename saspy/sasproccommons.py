@@ -248,7 +248,8 @@ class SASProcCommons:
         product.logger.debug("Proc code submission: " + str(code))
         return code
 
-    def _objectmethods(self, obj: str, *args) -> list:
+    @staticmethod
+    def _objectmethods(product, obj: str, *args) -> list:
         """
         This method parses the SAS log for artifacts (tables and graphics) that were created
         from the procedure method call
@@ -260,14 +261,14 @@ class SASProcCommons:
         code = "%listdata("
         code += obj
         code += ");"
-        self.logger.debug("Object Method macro call: " + str(code))
-        res = self.sas.submit(code, "text")
+        product.logger.debug("Object Method macro call: " + str(code))
+        res = product.sas.submit(code, "text")
         meth = res['LOG'].splitlines()
         for i in range(len(meth)):
             meth[i] = meth[i].lstrip().rstrip()
-        self.logger.debug('SAS Log: ' + res['LOG'])
+        product.logger.debug('SAS Log: ' + res['LOG'])
         objlist = meth[meth.index('startparse9878') + 1:meth.index('endparse9878')]
-        self.logger.debug("PROC attr list: " + str(objlist))
+        product.logger.debug("PROC attr list: " + str(objlist))
         return objlist
 
 
@@ -554,7 +555,7 @@ class SASProcCommons:
         return SASresults(obj1, product.sas, objname, nosub, log)
 
     @staticmethod
-    def _stmt_check(self, req: set, legal: set, stmt: dict) -> dict:
+    def _stmt_check(product, req: set, legal: set, stmt: dict) -> dict:
         """
         This method checks to make sure that the proc has all required statements and removes any statements
         aren't valid. Missing required statements is an error. Extra statements are not.
@@ -564,7 +565,7 @@ class SASProcCommons:
         :return: dictonary of verified statements
         """
         # debug the argument list
-        if self.logger.level == 10:
+        if product.logger.level == 10:
             for k, v in stmt.items():
                 if type(v) is str:
                     print("Key: " + k + ", Value: " + v)
