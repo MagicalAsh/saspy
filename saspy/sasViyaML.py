@@ -133,7 +133,7 @@ class SASViyaML:
         :param kwargs: dict
         :return: SAS result object
         """
-        pass
+        raise NotImplementedError("Under Development")
 
     def textmine(self, **kwargs: dict) -> object:
         """
@@ -144,4 +144,4 @@ class SASViyaML:
         :param kwargs: dict
         :return: SAS result object
         """
-        pass
+        raise NotImplementedError("Under Development")
