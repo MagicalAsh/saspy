@@ -85,7 +85,7 @@ class SASml:
         :param kwargs: dict
         :return: SAS result object
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'id', 'importance', 'performance', 'score', 'procopts'}
         self.logger.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "HP4SCORE", required_set, legal_set, **kwargs)

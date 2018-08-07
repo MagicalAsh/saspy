@@ -112,7 +112,7 @@ class SASets:
 
         Documentation link: http://support.sas.com/documentation/cdl//en/etsug/68148/HTML/default/viewer.htm#etsug_esm_syntax.htm
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'by', 'id', 'forecast', 'out', 'procopts'}
         return SASProcCommons._run_proc(self, "ESM", required_set, legal_set, **kwargs)
 
@@ -126,7 +126,7 @@ class SASets:
 
         Documentation link: http://support.sas.com/documentation/cdl//en/etsug/68148/HTML/default/viewer.htm#etsug_timeid_syntax.htm
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'by', 'id', 'out', 'procopts'}
         return SASProcCommons._run_proc(self, "TIMEID", required_set, legal_set, **kwargs)
 
@@ -141,6 +141,6 @@ class SASets:
         Documentation link:
         http://support.sas.com/documentation/cdl//en/etsug/68148/HTML/default/viewer.htm#etsug_timedata_syntax.htm
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'by', 'id', 'fcmport', 'out', 'outarrays', 'outscalars', 'var', 'prog_stmts', 'procopts'}
         return SASProcCommons._run_proc(self, "TIMEDATA", required_set, legal_set, **kwargs)

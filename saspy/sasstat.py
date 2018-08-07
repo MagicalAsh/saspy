@@ -69,7 +69,7 @@ class SASstat:
         :param kwargs: dict
         :return: SAS result object
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'cls', 'code', 'grow', 'id', 'model', 'out',
                      'partition', 'performance', 'prune', 'rules', 'target', 'input', 'procopts'}
         self.logger.debug("kwargs type: " + str(type(kwargs)))
@@ -309,7 +309,7 @@ class SASstat:
         :param kwargs: dict
         :return: SAS result object
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'by', 'cls', 'freq', 'paired', 'var', 'weight', 'procopts'}
 
         self.logger.debug("kwargs type: " + str(type(kwargs)))
@@ -331,7 +331,7 @@ class SASstat:
         :param kwargs: dict
         :return: SAS result object
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'by', 'freq', 'priors', 'pathdiagram', 'partial', 'var', 'weight', 'procopts'}
 
         self.logger.debug("kwargs type: " + str(type(kwargs)))

@@ -94,7 +94,7 @@ class SASutil:
         :param kwargs: dict
         :return: SAS result object
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'code', 'id', 'performance', 'target', 'input', 'procopts'}
         self.logger.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "HPBIN", required_set, legal_set, **kwargs)
@@ -117,7 +117,7 @@ class SASutil:
         :param kwargs: dict
         :return: SAS result object
         """
-        required_set = {}
-        legal_set = { 'class', 'performance', 'target', 'var', 'procopts'}
-        logging.debug("kwargs type: " + str(type(kwargs)))
+        required_set = set()
+        legal_set = {'class', 'performance', 'target', 'var', 'procopts'}
+        self.logger.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "HPSAMPLE", required_set, legal_set, **kwargs)
