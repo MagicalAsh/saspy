@@ -49,7 +49,7 @@ class SASProcCommons:
         code = key
         product = kwargs["product"]
         args = kwargs["args"]
-        product.logger.debug(key + " statement,length: %s,%s", args[key], len(args[key]))
+        product.logger.debug("Generating %s statement with args: %s", key, args[key])
 
         if isinstance(args[key], list):
             code += " " + " ".join(args[key])
@@ -64,11 +64,26 @@ class SASProcCommons:
     @staticmethod
     def _genCodeSingleVar(key, **kwargs):
         args = kwargs["args"]
-        if len(args[key]) != 1:
+        if (not isinstance(args[key], str) and len(args[key]) != 1) \
+                or (isinstance(args[key], str) and len(args[key].split()) != 1):
             raise ValueError("ERROR in code submission. " + key.upper() + " can only have one variable and you submitted: %s",
                              args[key])
 
         return SASProcCommons._genCode(key, **kwargs)
+
+    @staticmethod
+    def _rename(old, new, passTo=None):
+        def renamed(key, **kwargs):
+            if old in kwargs:
+                kwargs[new] = kwargs[old]
+                kwargs.pop(old, None)
+
+            if passTo is None:
+                return SASProcCommons._genCode(key, **kwargs)
+            else:
+                return passTo(key, **kwargs)
+
+        return renamed
 
     @staticmethod
     def _getKeywords():
@@ -88,7 +103,7 @@ class SASProcCommons:
             "blockseason",
             "by",
             "cdfplot",
-            ("cls", lambda key, **kwargs: SASProcCommons._genCode("class", **kwargs)),
+            ("cls", SASProcCommons._rename("cls", "class")),
             "code",
             "comphist",
             "corr",
@@ -233,7 +248,8 @@ class SASProcCommons:
         for keyword in keywords:
             if isinstance(keyword, tuple):
                 # We have something that requires special handling
-                code += keyword[1](keyword[0], **vars)
+                keyword, codeGen = keyword
+                code += codeGen(keyword, **vars)
             else:
                 code += SASProcCommons._genCode(keyword, **vars)
 
