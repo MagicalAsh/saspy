@@ -1022,7 +1022,7 @@ Will use HTML5 for this SASsession.""")
 
       l2 = ll['LOG'].rpartition("TABLE_EXISTS= ")
       l2 = l2[2].partition("\n")
-      exists = int(l2[0])
+      exists = bool(l2[0])
 
       return exists
    

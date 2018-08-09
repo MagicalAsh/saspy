@@ -44,7 +44,8 @@ class SASProcCommons:
         else:
             print("log is not a string but type:%s" % (str(type(log))))
 
-    def _makeProcCallMacro(self, objtype: str, objname: str, data: object = None, args: dict = None) -> str:
+    @staticmethod
+    def _makeProcCallMacro(product, objtype: str, objname: str, data: object = None, args: dict = None) -> str:
         """
         This method generates the SAS code from the python objects and included data and arguments.
         The list of args in this method is largely alphabetical but there are exceptions in order to
@@ -65,27 +66,27 @@ class SASProcCommons:
 
         # The different SAS products vary slightly in plotting and out methods.
         # this block sets the options correctly for plotting and output statements
-        if self.sasproduct.lower() == 'stat' and not ('ODSGraphics' in args.keys() or ODSGraphics == False) :
+        if product.sasproduct.lower() == 'stat' and not ('ODSGraphics' in args.keys() or ODSGraphics == False) :
             outmeth = ''
             plot = 'plot=all'
-        if self.sasproduct.lower() == 'qc':
+        if product.sasproduct.lower() == 'qc':
             outmeth = ''
             plot = ''
-        if self.sasproduct.lower() == 'ets' and not ('ODSGraphics' in args.keys() or ODSGraphics == False) :
+        if product.sasproduct.lower() == 'ets' and not ('ODSGraphics' in args.keys() or ODSGraphics == False) :
             outmeth = 'out'
             plot = 'plot=all'
-        if self.sasproduct.lower() == 'em':
+        if product.sasproduct.lower() == 'em':
             outmeth = ''
             plot = ''
-        if self.sasproduct.lower() == 'dmml':
+        if product.sasproduct.lower() == 'dmml':
             outmeth = 'out'
             plot = ''
-        self.logger.debug("product caller: " + self.sasproduct.lower())
+        product.logger.debug("product caller: " + product.sasproduct.lower())
         code = "%macro proccall(d);\n"
         # resolve issues withe Proc options, out= and plots=
         # The procopts statement should be in every procedure as a way to pass arbitrary options to the procedures
         if 'procopts' in args:
-            self.logger.debug("procopts statement,length: %s,%s", args['procopts'], len(args['procopts']))
+            product.logger.debug("procopts statement,length: %s,%s", args['procopts'], len(args['procopts']))
             procopts = args['procopts']
         if 'outmeth' in args:
             outmeth = args['outmeth']
@@ -98,87 +99,87 @@ class SASProcCommons:
                 objtype, data.libref, data.table, data._dsopts(), plot, outmeth, outstr, procopts)
         else:
             code += "proc %s data=%s.%s%s %s %s ;\n" % (objtype, data.libref, data.table, data._dsopts(), plot, procopts)
-        self.logger.debug("args value: " + str(args))
-        self.logger.debug("args type: " + str(type(args)))
+        product.logger.debug("args value: " + str(args))
+        product.logger.debug("args type: " + str(type(args)))
 
         # this list is largely alphabetical but there are exceptions in order to
         # satisfy the order needs of the statements for the procedure
         # as an example... http://support.sas.com/documentation/cdl/en/statug/68162/HTML/default/viewer.htm#statug_glm_syntax.htm#statug.glm.glmpostable
         if 'absorb' in args:
-            self.logger.debug("absorb statement,length: %s,%s", args['absorb'], len(args['absorb']))
+            product.logger.debug("absorb statement,length: %s,%s", args['absorb'], len(args['absorb']))
             code += "absorb %s;\n" % (args['absorb'])
         if 'add' in args:
-            self.logger.debug("add statement,length: %s,%s", args['add'], len(args['add']))
+            product.logger.debug("add statement,length: %s,%s", args['add'], len(args['add']))
             code += "add %s;\n" % (args['add'])
         # only three valid values logistic, mlp, mlp direct
         if 'architecture' in args:
-            self.logger.debug("architecture statement,length: %s,%s", args['architecture'], len(args['architecture']))
+            product.logger.debug("architecture statement,length: %s,%s", args['architecture'], len(args['architecture']))
             if args['architecture'].lower().strip() in ['logistic', 'mlp', 'mlp direct']:
                 code += "architecture %s;\n" % (args['architecture'])
             else:
                 print("ERROR in code submission. ARCHITECTURE can only have one of these")
                 print("values -- ['logistic', 'mlp', 'mlp direct'] you submitted: %s", args['architecture'])
         if 'assess' in args:
-            self.logger.debug("assess statement,length: %s,%s", args['assess'], len(args['assess']))
+            product.logger.debug("assess statement,length: %s,%s", args['assess'], len(args['assess']))
             code += "assess %s;\n" % (args['assess'])
         if 'autoreg' in args:
-            self.logger.debug("autoreg statement,length: %s,%s", args['autoreg'], len(args['autoreg']))
+            product.logger.debug("autoreg statement,length: %s,%s", args['autoreg'], len(args['autoreg']))
             code += "autoreg %s;\n" % (args['autoreg'])
         if 'bayes' in args:
-            self.logger.debug("bayes statement,length: %s,%s", args['bayes'], len(args['bayes']))
+            product.logger.debug("bayes statement,length: %s,%s", args['bayes'], len(args['bayes']))
             code += "bayes %s;\n" % (args['bayes'])
         if 'blockseason' in args:
-            self.logger.debug("blockseason statement,length: %s,%s", args['blockseason'], len(args['blockseason']))
+            product.logger.debug("blockseason statement,length: %s,%s", args['blockseason'], len(args['blockseason']))
             code += "blockseason %s;\n" % (args['blockseason'])
         if 'by' in args:
-            self.logger.debug("by statement,length: %s,%s", args['by'], len(args['by']))
+            product.logger.debug("by statement,length: %s,%s", args['by'], len(args['by']))
             code += "by %s;\n" % (args['by'])
         if 'cdfplot' in args:
-            self.logger.debug("cdfplot statement,length: %s,%s", args['cdfplot'], len(args['cdfplot']))
+            product.logger.debug("cdfplot statement,length: %s,%s", args['cdfplot'], len(args['cdfplot']))
             code += "cdfplot %s;\n" % (args['cdfplot'])
         if 'cls' in args:
             if isinstance(args['cls'], str):
-                self.logger.debug("class statement,length: %s,%s", args['cls'], len(args['cls']))
+                product.logger.debug("class statement,length: %s,%s", args['cls'], len(args['cls']))
                 code += "class %s;\n" % (args['cls'])
             elif isinstance(args['cls'], list):
                 code += "class %s;\n" % (' '.join(args['cls']))
         if 'code' in args:
-            self.logger.debug("code statement,length: %s,%s", args['code'], len(args['code']))
+            product.logger.debug("code statement,length: %s,%s", args['code'], len(args['code']))
             code += "code file='%s';\n" % (args['code'])
         # The save statement is used by few procs but it doesn't have a consistent pattern
         # Here we case it correctly or throw an error.
         if 'comphist' in args:
-            self.logger.debug("comphistogram statement,length: %s,%s", args['comphist'], len(args['comphist']))
+            product.logger.debug("comphistogram statement,length: %s,%s", args['comphist'], len(args['comphist']))
             code += "comphist %s;\n" % (args['comphist'])
         # contrast moved
         if 'corr' in args:
-            self.logger.debug("corr statement,length: %s,%s", args['corr'], len(args['corr']))
+            product.logger.debug("corr statement,length: %s,%s", args['corr'], len(args['corr']))
             code += "corr %s;\n" % (args['corr'])
         if 'crosscorr' in args:
-            self.logger.debug("crosscorr statement,length: %s,%s", args['crosscorr'], len(args['crosscorr']))
+            product.logger.debug("crosscorr statement,length: %s,%s", args['crosscorr'], len(args['crosscorr']))
             code += "crosscorr %s;\n" % (args['crosscorr'])
         if 'crossvar' in args:
-            self.logger.debug("crossvar statement,length: %s,%s", args['crossvar'], len(args['crossvar']))
+            product.logger.debug("crossvar statement,length: %s,%s", args['crossvar'], len(args['crossvar']))
             code += "crossvar %s;\n" % (args['crossvar'])
         if 'cycle' in args:
-            self.logger.debug("cycle statement,length: %s,%s", args['cycle'], len(args['cycle']))
+            product.logger.debug("cycle statement,length: %s,%s", args['cycle'], len(args['cycle']))
             code += "cycle %s;\n" % (args['cycle'])
         if 'decomp' in args:
-            self.logger.debug("decomp statement,length: %s,%s", args['decomp'], len(args['decomp']))
+            product.logger.debug("decomp statement,length: %s,%s", args['decomp'], len(args['decomp']))
             code += "decomp %s;\n" % (args['decomp'])
         if 'deplag' in args:
-            self.logger.debug("deplag statement,length: %s,%s", args['deplag'], len(args['deplag']))
+            product.logger.debug("deplag statement,length: %s,%s", args['deplag'], len(args['deplag']))
             code += "deplag %s;\n" % (args['deplag'])
         if 'effect' in args:
-            self.logger.debug("effect statement,length: %s,%s", args['effect'], len(args['effect']))
+            product.logger.debug("effect statement,length: %s,%s", args['effect'], len(args['effect']))
             code += "effect %s;\n" % (args['effect'])
         # estimate moved
         if 'fcmport' in args:
-            self.logger.debug("fcmport statement,length: %s,%s", args['fcmport'], len(args['fcmport']))
+            product.logger.debug("fcmport statement,length: %s,%s", args['fcmport'], len(args['fcmport']))
             code += "fcmport %s;\n" % (args['fcmport'])
         if 'freq' in args:
             # add check to make sure it is only one variable
-            self.logger.debug("freq statement,length: %s,%s", args['freq'], len(args['freq']))
+            product.logger.debug("freq statement,length: %s,%s", args['freq'], len(args['freq']))
             # check to make sure it is only one variable
             if len(args['freq'].split()) == 1:
                 code += "freq %s;\n" % (args['freq'])
@@ -186,30 +187,30 @@ class SASProcCommons:
                 raise SyntaxError("ERROR in code submission. FREQ can only have one variable and you submitted: %s",
                                   args['freq'])
         if 'forecast' in args:
-            self.logger.debug("forecast statement,length: %s,%s", args['forecast'], len(args['forecast']))
+            product.logger.debug("forecast statement,length: %s,%s", args['forecast'], len(args['forecast']))
             code += "forecast %s;\n" % (args['forecast'])
         # handle a string or list of strings
         if 'hidden' in args:
             if isinstance(args['hidden'], (str, int)):
-                self.logger.debug("hidden statement,length: %s,%s", str(args['hidden']), len(str(args['hidden'])))
+                product.logger.debug("hidden statement,length: %s,%s", str(args['hidden']), len(str(args['hidden'])))
                 code += "hidden %s;\n" % (str(args['hidden']))
             else:
                 for item in args['hidden']:
                     code += "hidden %s;\n" % item
         if 'id' in args:
-            self.logger.debug("id statement,length: %s,%s", args['id'], len(args['id']))
+            product.logger.debug("id statement,length: %s,%s", args['id'], len(args['id']))
             code += "id %s;\n" % (args['id'])
         if 'histogram' in args:
-            self.logger.debug("histogram statement,length: %s,%s", args['histogram'], len(args['histogram']))
+            product.logger.debug("histogram statement,length: %s,%s", args['histogram'], len(args['histogram']))
             code += "histogram %s;\n" % (args['histogram'])
         if 'hazardratio' in args:
-            self.logger.debug("hazardratio statement,length: %s,%s", args['hazardratio'], len(args['hazardratio']))
+            product.logger.debug("hazardratio statement,length: %s,%s", args['hazardratio'], len(args['hazardratio']))
             code += "hazardratio %s;\n" % (args['id'])
         if 'identify' in args:
-            self.logger.debug("identify statement,length: %s,%s", args['identify'], len(args['identify']))
+            product.logger.debug("identify statement,length: %s,%s", args['identify'], len(args['identify']))
             code += "identify %s;\n" % (args['identify'])
         if 'impute' in args:
-            self.logger.debug("impute statement,length: %s,%s", args['impute'], len(args['impute']))
+            product.logger.debug("impute statement,length: %s,%s", args['impute'], len(args['impute']))
             if not (isinstance(args['impute'], dict) or isinstance(args['impute'], str)):
                 raise SyntaxError("IMPUTE must be a dictionary: %s" % str(type(args['impute'])))
             if isinstance(args['impute'], dict):
@@ -232,7 +233,7 @@ class SASProcCommons:
                 code += "impute %s;\n" % (args['impute'])
         if 'input' in args:
             if isinstance(args['input'], str):
-                self.logger.debug("input statement,length: %s,%s", args['input'], len(args['input']))
+                product.logger.debug("input statement,length: %s,%s", args['input'], len(args['input']))
                 code += "input %s;\n" % (args['input'])
             elif isinstance(args['input'], dict):
                 try:
@@ -264,14 +265,14 @@ class SASProcCommons:
             else:
                 raise SyntaxError("INPUT is in an unknown format: %s" % str(args['input']))
         if 'inset' in args:
-            self.logger.debug("inset statement,length: %s,%s", args['inset'], len(args['inset']))
+            product.logger.debug("inset statement,length: %s,%s", args['inset'], len(args['inset']))
             code += "inset %s;\n" % (args['inset'])
         if 'intervals' in args:
-            self.logger.debug("intervals statement,length: %s,%s", args['intervals'], len(args['intervals']))
+            product.logger.debug("intervals statement,length: %s,%s", args['intervals'], len(args['intervals']))
             code += "intervals %s;\n" % (args['intervals'])
         if 'irregular' in args:
             if isinstance(args['irregular'], str):
-                self.logger.debug("irregular statement,length: %s,%s", args['irregular'], len(args['irregular']))
+                product.logger.debug("irregular statement,length: %s,%s", args['irregular'], len(args['irregular']))
                 code += "irregular %s;\n" % (args['irregular'])
             elif isinstance(args['irregular'], bool) and args['irregular']:
                 code += "irregular;\n"
@@ -279,7 +280,7 @@ class SASProcCommons:
                 raise SyntaxError("irregular is in an unknown format: %s" % str(args['irregular']))
         if 'level' in args:
             if isinstance(args['level'], str):
-                self.logger.debug("level statement,length: %s,%s", args['level'], len(args['level']))
+                product.logger.debug("level statement,length: %s,%s", args['level'], len(args['level']))
                 code += "level %s;\n" % (args['level'])
             elif isinstance(args['level'], bool) and args['level']:
                 code += "level;\n"
@@ -289,52 +290,52 @@ class SASProcCommons:
         # manova moved
         # means moved
         if 'model' in args:
-            self.logger.debug("model statement,length: %s,%s", args['model'], len(args['model']))
+            product.logger.debug("model statement,length: %s,%s", args['model'], len(args['model']))
             code += "model %s;\n" % (args['model'])
         if 'contrast' in args:
-            self.logger.debug("contrast statement,length: %s,%s", args['contrast'], len(args['contrast']))
+            product.logger.debug("contrast statement,length: %s,%s", args['contrast'], len(args['contrast']))
             code += "contrast %s;\n" % (args['contrast'])
         if 'estimate' in args:
             if isinstance(args['estimate'], str):
-                self.logger.debug("estimate statement,length: %s,%s", args['estimate'], len(args['estimate']))
+                product.logger.debug("estimate statement,length: %s,%s", args['estimate'], len(args['estimate']))
                 code += "estimate %s;\n" % (args['estimate'])
             elif isinstance(args['estimate'], bool) and args['estimate']:
                 code += "estimate;\n"
             else:
                 raise SyntaxError("estimate is in an unknown format: %s" % str(args['estimate']))
         if 'lsmeans' in args:
-            self.logger.debug("lsmeans statement,length: %s,%s", args['lsmeans'], len(args['lsmeans']))
+            product.logger.debug("lsmeans statement,length: %s,%s", args['lsmeans'], len(args['lsmeans']))
             code += "lsmeans %s;\n" % (args['lsmeans'])
         if 'lsmestimate' in args:
-            self.logger.debug("lsmestimate statement,length: %s,%s", args['lsmestimate'], len(args['lsmestimate']))
+            product.logger.debug("lsmestimate statement,length: %s,%s", args['lsmestimate'], len(args['lsmestimate']))
             code += "lsmestimate %s;\n" % (args['lsmestimate'])
         if 'test' in args:
-            self.logger.debug("test statement,length: %s,%s", args['test'], len(args['test']))
+            product.logger.debug("test statement,length: %s,%s", args['test'], len(args['test']))
             code += "test %s;\n" % (args['test'])
         if 'manova' in args:
-            self.logger.debug("manova statement,length: %s,%s", args['manova'], len(args['manova']))
+            product.logger.debug("manova statement,length: %s,%s", args['manova'], len(args['manova']))
             code += "manova %s;\n" % (args['manova'])
         if 'means' in args:
-            self.logger.debug("means statement,length: %s,%s", args['means'], len(args['means']))
+            product.logger.debug("means statement,length: %s,%s", args['means'], len(args['means']))
             code += "means %s;\n" % (args['means'])
         if 'nloptions' in args:
-            self.logger.debug("nloptions statement,length: %s,%s", args['nloptions'], len(args['nloptions']))
+            product.logger.debug("nloptions statement,length: %s,%s", args['nloptions'], len(args['nloptions']))
             code += "nloptions %s;\n" % (args['nloptions'])
         if 'oddsratio' in args:
-            self.logger.debug("oddsratio statement,length: %s,%s", args['oddsratio'], len(args['oddsratio']))
+            product.logger.debug("oddsratio statement,length: %s,%s", args['oddsratio'], len(args['oddsratio']))
             code += "oddsratio %s;\n" % (args['oddsratio'])
         if 'outarrays' in args:
-            self.logger.debug("outarrays statement,length: %s,%s", args['outarrays'], len(args['outarrays']))
+            product.logger.debug("outarrays statement,length: %s,%s", args['outarrays'], len(args['outarrays']))
             code += "outarrays %s;\n" % (args['outarrays'])
         if 'outscalars' in args:
-            self.logger.debug("outscalars statement,length: %s,%s", args['outscalars'], len(args['outscalars']))
+            product.logger.debug("outscalars statement,length: %s,%s", args['outscalars'], len(args['outscalars']))
             code += "outscalars %s;\n" % (args['outscalars'])
         if 'outlier' in args:
-            self.logger.debug("outlier statement,length: %s,%s", args['outlier'], len(args['outlier']))
+            product.logger.debug("outlier statement,length: %s,%s", args['outlier'], len(args['outlier']))
             code += "outlier %s;\n" % (args['outlier'])
         if 'paired' in args:
             if isinstance(args['paired'], str):
-                self.logger.debug("paired statement,length: %s,%s", args['paired'], len(args['paired']))
+                product.logger.debug("paired statement,length: %s,%s", args['paired'], len(args['paired']))
                 code += "paired %s;\n" % (args['paired'])
             elif isinstance(args['paired'], list):
                 if len(args['paired']) == 1:
@@ -346,27 +347,27 @@ class SASProcCommons:
             else:
                 raise SyntaxError("paired is in an unknown format: %s" % str(args['paired']))
         if 'parms' in args:
-            self.logger.debug("parms statement,length: %s,%s", args['parms'], len(args['parms']))
+            product.logger.debug("parms statement,length: %s,%s", args['parms'], len(args['parms']))
             code += "parms %s;\n" % (args['parms'])
         if 'partial' in args:
-            self.logger.debug("partial statement,length: %s,%s", args['partial'], len(args['partial']))
+            product.logger.debug("partial statement,length: %s,%s", args['partial'], len(args['partial']))
             code += "partial %s;\n" % (args['partial'])
         if 'pathdiagram' in args:
-            self.logger.debug("pathdiagram statement,length: %s,%s", args['pathdiagram'], len(args['pathdiagram']))
+            product.logger.debug("pathdiagram statement,length: %s,%s", args['pathdiagram'], len(args['pathdiagram']))
             code += "pathdiagram %s;\n" % (args['pathdiagram'])
         if 'performance' in args:
-            self.logger.debug("performance statement,length: %s,%s", args['performance'], len(args['performance']))
+            product.logger.debug("performance statement,length: %s,%s", args['performance'], len(args['performance']))
             code += "performance %s;\n" % (args['performance'])
         if 'ppplot' in args:
-            self.logger.debug("ppplot statement,length: %s,%s", args['ppplot'], len(args['ppplot']))
+            product.logger.debug("ppplot statement,length: %s,%s", args['ppplot'], len(args['ppplot']))
             code += "ppplot %s;\n" % (args['ppplot'])
         if 'prior' in args:
             # TODO: check that distribution is in the list
-            self.logger.debug("prior statement,length: %s,%s", args['prior'], len(args['prior']))
+            product.logger.debug("prior statement,length: %s,%s", args['prior'], len(args['prior']))
             code += "prior %s;\n" % (args['prior'])
         if 'priors' in args:
             if isinstance(args['priors'], str):
-                self.logger.debug("priors statement,length: %s,%s", args['priors'], len(args['priors']))
+                product.logger.debug("priors statement,length: %s,%s", args['priors'], len(args['priors']))
                 code += "priors %s;\n" % (args['priors'])
             elif isinstance(args['priors'], list):
                 if len(args['priors']) == 1:
@@ -378,34 +379,34 @@ class SASProcCommons:
             else:
                 raise SyntaxError("priors is in an unknown format: %s" % str(args['priors']))
         if 'prog_stmts' in args:
-            self.logger.debug("prog_stmts statement,length: %s,%s", args['prog_stmts'], len(args['prog_stmts']))
+            product.logger.debug("prog_stmts statement,length: %s,%s", args['prog_stmts'], len(args['prog_stmts']))
             code += " %s;\n" % (args['prog_stmts'])
         if 'probplot' in args:
-            self.logger.debug("probplot statement,length: %s,%s", args['probplot'], len(args['probplot']))
+            product.logger.debug("probplot statement,length: %s,%s", args['probplot'], len(args['probplot']))
             code += "probplot %s;\n" % (args['probplot'])
         if 'qqplot' in args:
-            self.logger.debug("qqplot statement,length: %s,%s", args['qqplot'], len(args['qqplot']))
+            product.logger.debug("qqplot statement,length: %s,%s", args['qqplot'], len(args['qqplot']))
             code += "qqplot %s;\n" % (args['qqplot'])
         if 'random' in args:
-            self.logger.debug("random statement,length: %s,%s", args['random'], len(args['random']))
+            product.logger.debug("random statement,length: %s,%s", args['random'], len(args['random']))
             code += "random %s;\n" % (args['random'])
         if 'randomreg' in args:
-            self.logger.debug("randomreg statement,length: %s,%s", args['randomreg'], len(args['randomreg']))
+            product.logger.debug("randomreg statement,length: %s,%s", args['randomreg'], len(args['randomreg']))
             code += "randomreg %s;\n" % (args['randomreg'])
         if 'repeated' in args:
-            self.logger.debug("repeated statement,length: %s,%s", args['repeated'], len(args['repeated']))
+            product.logger.debug("repeated statement,length: %s,%s", args['repeated'], len(args['repeated']))
             code += "repeated %s;\n" % (args['repeated'])
         if 'roc' in args:
-            self.logger.debug("roc statement,length: %s,%s", args['roc'], len(args['roc']))
+            product.logger.debug("roc statement,length: %s,%s", args['roc'], len(args['roc']))
             code += "roc %s;\n" % (args['roc'])
         if 'season' in args:
-            self.logger.debug("season statement,length: %s,%s", args['season'], len(args['season']))
+            product.logger.debug("season statement,length: %s,%s", args['season'], len(args['season']))
             code += "season %s;\n" % (args['season'])
         if 'selection' in args:
             if isinstance(args['selection'], str):
                 if args['selection'].lower().strip() in ['none', 'forward', 'backward', 'stepwise', 'forwardswap',
                                                      'lar', 'lasso']:
-                    self.logger.debug("selection statement,length: %s,%s", args['selection'], len(args['selection']))
+                    product.logger.debug("selection statement,length: %s,%s", args['selection'], len(args['selection']))
                     code += "selection method=%s;\n" % (args['selection'])
             if isinstance(args['selection'], dict):
                 if bool(args['selection']): # is the dictionary empty
@@ -421,35 +422,35 @@ class SASProcCommons:
                     code += "selection method=%s (%s)  %s;"  % (m, ' '.join('{}={}'.format(key, val) for key, val in args['selection'].items()), dstr)
         if 'slope' in args:
             if isinstance(args['slope'], str):
-                self.logger.debug("slope statement,length: %s,%s", args['slope'], len(args['slope']))
+                product.logger.debug("slope statement,length: %s,%s", args['slope'], len(args['slope']))
                 code += "slope %s;\n" % (args['slope'])
             elif isinstance(args['slope'], bool) and args['slope']:
                 code += "slope;\n"
             else:
                 raise SyntaxError("slope is in an unknown format: %s" % str(args['slope']))
         if 'splinereg' in args:
-            self.logger.debug("splinereg statement,length: %s,%s", args['splinereg'], len(args['splinereg']))
+            product.logger.debug("splinereg statement,length: %s,%s", args['splinereg'], len(args['splinereg']))
             code += "splinereg %s;\n" % (args['splinereg'])
         if 'splineseason' in args:
-            self.logger.debug("splineseason statement,length: %s,%s", args['splineseason'], len(args['splineseason']))
+            product.logger.debug("splineseason statement,length: %s,%s", args['splineseason'], len(args['splineseason']))
             code += "splineseason %s;\n" % (args['splineseason'])
         if 'store' in args:
-            self.logger.debug("store statement,length: %s,%s", args['store'], len(args['store']))
+            product.logger.debug("store statement,length: %s,%s", args['store'], len(args['store']))
             code += "store %s;\n" % (args['store'])
         if 'trend' in args:
-            self.logger.debug("trend statement,length: %s,%s", args['trend'], len(args['trend']))
+            product.logger.debug("trend statement,length: %s,%s", args['trend'], len(args['trend']))
             code += "trend %s;\n" % (args['trend'])
         if 'slice' in args:
-            self.logger.debug("slice statement,length: %s,%s", args['slice'], len(args['slice']))
+            product.logger.debug("slice statement,length: %s,%s", args['slice'], len(args['slice']))
             code += "slice %s;\n" % (args['slice'])
         if 'spec' in args:
-            self.logger.debug("spec statement,length: %s,%s", args['spec'], len(args['spec']))
+            product.logger.debug("spec statement,length: %s,%s", args['spec'], len(args['spec']))
             code += "spec %s;\n" % (args['spec'])
         if 'strata' in args:
-            self.logger.debug("strata statement,length: %s,%s", args['strata'], len(args['strata']))
+            product.logger.debug("strata statement,length: %s,%s", args['strata'], len(args['strata']))
             code += "strata %s;\n" % (args['strata'])
         if 'target' in args:
-            self.logger.debug("target statement,length: %s,%s", args['target'], len(args['target']))
+            product.logger.debug("target statement,length: %s,%s", args['target'], len(args['target']))
             # make sure target is a single variable extra split to account for level= option
             if isinstance(args['target'], str):
                 if len(args['target'].split('/')[0].split()) == 1:
@@ -515,14 +516,14 @@ class SASProcCommons:
                 except:
                     raise SyntaxError("Proper Keys not found for TRAIN dictionary: %s" % args['train'].keys())
             else:
-                self.logger.debug("train statement,length: %s,%s", args['train'], len(args['train']))
+                product.logger.debug("train statement,length: %s,%s", args['train'], len(args['train']))
                 code += "train %s;\n" % (args['train'])
         # test moved
         if 'var' in args:
-            self.logger.debug("var statement,length: %s,%s", args['var'], len(args['var']))
+            product.logger.debug("var statement,length: %s,%s", args['var'], len(args['var']))
             code += "var %s;\n" % (args['var'])
         if 'weight' in args:
-            self.logger.debug("weight statement,length: %s,%s", args['weight'], len(args['weight']))
+            product.logger.debug("weight statement,length: %s,%s", args['weight'], len(args['weight']))
             # check to make sure it is only one variable
             if len(args['weight'].split()) == 1:
                 code += "weight %s;\n" % (args['weight'])
@@ -530,16 +531,16 @@ class SASProcCommons:
                 raise SyntaxError("ERROR in code submission. WEIGHT can only have one variable and you submitted: %s",
                                   args['weight'])
         if 'grow' in args:
-            self.logger.debug("grow statement,length: %s,%s", args['grow'], len(args['grow']))
+            product.logger.debug("grow statement,length: %s,%s", args['grow'], len(args['grow']))
             code += "grow %s;\n" % (args['grow'])
         if 'prune' in args:
-            self.logger.debug("prune statement,length: %s,%s", args['prune'], len(args['prune']))
+            product.logger.debug("prune statement,length: %s,%s", args['prune'], len(args['prune']))
             code += "prune %s;\n" % (args['prune'])
         if 'rules' in args:
-            self.logger.debug("rules statement,length: %s,%s", args['rules'], len(args['rules']))
+            product.logger.debug("rules statement,length: %s,%s", args['rules'], len(args['rules']))
             code += "rules %s;\n" % (args['rules'])
         if 'partition' in args:
-            self.logger.debug("partition statement,length: %s,%s", args['partition'], len(args['partition']))
+            product.logger.debug("partition statement,length: %s,%s", args['partition'], len(args['partition']))
             code += "partition %s;\n" % (args['partition'])
         if 'out' in args and not len(outmeth):
             if not isinstance(args['out'], dict):
@@ -561,7 +562,7 @@ class SASProcCommons:
                 code += "output out=%s %s;\n" % (outstr, varlist)
 
         if 'xchart' in args:
-            self.logger.debug("xchart statement,length: %s,%s", args['xchart'], len(args['xchart']))
+            product.logger.debug("xchart statement,length: %s,%s", args['xchart'], len(args['xchart']))
             code += "xchart %s;\n" % (args['xchart'])
         if 'score' in args:
             if isinstance(args['score'], str):
@@ -601,7 +602,7 @@ class SASProcCommons:
 
         code += "run; quit; %mend;\n"
         code += "%%mangobj(%s,%s,%s);" % (objname, objtype, data.table)
-        self.logger.debug("Proc code submission: " + str(code))
+        product.logger.debug("Proc code submission: " + str(code))
         return code
 
     def _objectmethods(self, obj: str, *args) -> list:
@@ -757,7 +758,7 @@ class SASProcCommons:
                 raise SyntaxError("input must be a string, list, or dictionary you provided: %s" % str(type(inputs)))
         return kwargs
 
-    def _target_stmt(self, stmt: object) -> tuple:
+    def _target_stmt(self, stmt) -> tuple:
         """
         takes the target key from kwargs and processes it to aid in the generation of a model statement
         :param stmt: str, list, or dict that contains the model information.
@@ -815,7 +816,7 @@ class SASProcCommons:
             raise SyntaxError("TARGET is in an unknown format: %s" % str(stmt))
         return (code, cls)
 
-    def _input_stmt(self, stmt: object) -> tuple:
+    def _input_stmt(self, stmt) -> tuple:
         """
         takes the input key from kwargs and processes it to aid in the generation of a model statement
         :param stmt: str, list, or dict that contains the model information.
@@ -852,11 +853,12 @@ class SASProcCommons:
             raise SyntaxError("INPUT is in an unknown format: %s" % str(stmt))
         return (code, cls)
 
-    def _run_proc(self, procname: str, required_set: set, legal_set: set, **kwargs: dict):
+    @staticmethod
+    def _run_proc(product, procname: str, required_set: set, legal_set: set, **kwargs: dict):
         """
         This internal method takes the options and statements from the PROC and generates
         the code needed to submit it to SAS. It then submits the code.
-        :param self:
+        :param product:
         :param procname: str
         :param required_set: set of options
         :param legal_set: set of valid options
@@ -866,35 +868,35 @@ class SASProcCommons:
         data = kwargs.pop('data', None)
         objtype = procname.lower()
         if 'model' not in kwargs.keys():
-            kwargs = SASProcCommons._processNominals(self, kwargs, data)
+            kwargs = SASProcCommons._processNominals(product, kwargs, data)
             if 'model' in required_set:
                 tcls_str = ''
                 icls_str = ''
-                t_str, tcls_str = SASProcCommons._target_stmt(self, kwargs['target'])
-                i_str, icls_str = SASProcCommons._input_stmt(self, kwargs['input'])
+                t_str, tcls_str = SASProcCommons._target_stmt(product, kwargs['target'])
+                i_str, icls_str = SASProcCommons._input_stmt(product, kwargs['input'])
 
                 kwargs['model'] = str(t_str + ' = ' + i_str )
                 kwargs['cls'] = str(tcls_str + " " + icls_str)
-        verifiedKwargs = SASProcCommons._stmt_check(self, required_set, legal_set, kwargs)
+        verifiedKwargs = SASProcCommons._stmt_check(product, required_set, legal_set, kwargs)
         obj1 = []
         nosub = False
         objname = ''
         log = ''
         if len(verifiedKwargs):
-            objname = procname[:3].lower() + self.sas._objcnt()  # translate to a libname so needs to be less than 8
-            code = SASProcCommons._makeProcCallMacro(self, objtype, objname, data, verifiedKwargs)
-            self.logger.debug(procname + " macro submission: " + str(code))
-            if not self.sas.nosub:
-                ll = self.sas.submit(code, "text")
+            objname = procname[:3].lower() + product.sas._objcnt()  # translate to a libname so needs to be less than 8
+            code = SASProcCommons._makeProcCallMacro(product, objtype, objname, data, verifiedKwargs)
+            product.logger.debug(procname + " macro submission: " + str(code))
+            if not product.sas.nosub:
+                ll = product.sas.submit(code, "text")
                 log = ll['LOG']
                 error = SASProcCommons._errorLog(log)
                 isinstance(error, str)
                 if len(error) > 1:
                     RuntimeWarning("ERRORS found in SAS log: \n%s" % error)
-                    return SASresults(obj1, self.sas, objname, nosub, log)
+                    return SASresults(obj1, product.sas, objname, nosub, log)
                 try:
-                    obj1 = SASProcCommons._objectmethods(self, objname)
-                    self.logger.debug(obj1)
+                    obj1 = SASProcCommons._objectmethods(product, objname)
+                    product.logger.debug(obj1)
                 except Exception:
                     pass
             else:
@@ -902,7 +904,7 @@ class SASProcCommons:
                 nosub = True
         else:
             RuntimeWarning("Error in code submission")
-        return SASresults(obj1, self.sas, objname, nosub, log)
+        return SASresults(obj1, product.sas, objname, nosub, log)
 
     @staticmethod
     def _stmt_check(self, req: set, legal: set, stmt: dict) -> dict:
@@ -937,7 +939,7 @@ class SASProcCommons:
                 totSet = legalSet | reqSet
             else:
                 totSet = legalSet
-            generalSet = set(['ODSGraphics', 'stmtpassthrough', 'targOpts', 'procopts'])
+            generalSet = {['ODSGraphics', 'stmtpassthrough', 'targOpts', 'procopts']}
             extraSet = set(stmt.keys() - generalSet).difference(totSet)  # find keys not in legal or required sets
             if extraSet:
                 for item in extraSet:

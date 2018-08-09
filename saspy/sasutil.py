@@ -57,7 +57,7 @@ class SASutil:
         self.sas = session
         logging.debug("Initialization of SAS Macro: " + self.sas.saslog())
 
-    def hpimpute(self, **kwargs: dict) -> 'SASresults':
+    def hpimpute(self, **kwargs) -> SASresults:
         """
         Python method to call the HPIMPUTE procedure
 
@@ -78,7 +78,7 @@ class SASutil:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "HPIMPUTE", required_set, legal_set, **kwargs)
 
-    def hpbin(self, **kwargs: dict) -> 'SASresults':
+    def hpbin(self, **kwargs) -> SASresults:
         """
         Python method to call the HPBIN procedure
 
@@ -94,13 +94,13 @@ class SASutil:
         :param kwargs: dict
         :return: SAS result object
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'code', 'id', 'performance', 'target', 'input', 'procopts'}
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "HPBIN", required_set, legal_set, **kwargs)
 
 
-    def hpsample(self, **kwargs: dict) -> 'SASresults':
+    def hpsample(self, **kwargs) -> SASresults:
         """
         Python method to call the HPSAMPLE procedure
 
@@ -117,7 +117,7 @@ class SASutil:
         :param kwargs: dict
         :return: SAS result object
         """
-        required_set = {}
+        required_set = set()
         legal_set = { 'class', 'performance', 'target', 'var', 'procopts'}
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "HPSAMPLE", required_set, legal_set, **kwargs)

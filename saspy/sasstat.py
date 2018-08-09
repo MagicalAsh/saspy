@@ -53,7 +53,7 @@ class SASstat:
         self.sas = session
         logging.debug("Initialization of SAS Macro: " + self.sas.saslog())
 
-    def hpsplit(self, **kwargs: dict) -> 'SASresults':
+    def hpsplit(self, **kwargs) -> SASresults:
         """
         Python method to call the HPSPLIT procedure
 
@@ -75,7 +75,7 @@ class SASstat:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "HPSPLIT", required_set, legal_set, **kwargs)
 
-    def reg(self, **kwargs: dict) -> 'SASresults':
+    def reg(self, **kwargs) -> SASresults:
         """
         Python method to call the REG procedure
 
@@ -100,7 +100,7 @@ class SASstat:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "REG", required_set, legal_set, **kwargs)
 
-    def mixed(self, **kwargs: dict) -> 'SASresults':
+    def mixed(self, **kwargs) -> SASresults:
         """
         Python method to call the MIXED procedure
 
@@ -126,7 +126,7 @@ class SASstat:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "MIXED", required_set, legal_set, **kwargs)
 
-    def glm(self, **kwargs: dict) -> 'SASresults':
+    def glm(self, **kwargs) -> SASresults:
         """
         Python method to call the GLM procedure
 
@@ -153,7 +153,7 @@ class SASstat:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "GLM", required_set, legal_set, **kwargs)
 
-    def logistic(self, **kwargs: dict) -> 'SASresults':
+    def logistic(self, **kwargs) -> SASresults:
         """
         Python method to call the LOGISTIC procedure
 
@@ -186,7 +186,7 @@ class SASstat:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "LOGISTIC", required_set, legal_set, **kwargs)
 
-    def tpspline(self, **kwargs: dict) -> 'SASresults':
+    def tpspline(self, **kwargs) -> SASresults:
         """
         Python method to call the TPSPLINE procedure
 
@@ -210,7 +210,7 @@ class SASstat:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "TPSPLINE", required_set, legal_set, **kwargs)
 
-    def hplogistic(self, **kwargs: dict) -> 'SASresults':
+    def hplogistic(self, **kwargs) -> SASresults:
         """
         Python method to call the HPLOGISTIC procedure
 
@@ -238,7 +238,7 @@ class SASstat:
         kwargs['ODSGraphics']=False
         return SASProcCommons._run_proc(self, "HPLOGISTIC", required_set, legal_set, **kwargs)
 
-    def hpreg(self, **kwargs: dict) -> 'SASresults':
+    def hpreg(self, **kwargs) -> SASresults:
         """
         Python method to call the HPREG procedure
         For more information on the statements see the Documentation link.
@@ -264,7 +264,7 @@ class SASstat:
         kwargs['ODSGraphics']=False
         return SASProcCommons._run_proc(self, "HPREG", required_set, legal_set, **kwargs)
 
-    def phreg(self, **kwargs: dict) -> 'SASresults':
+    def phreg(self, **kwargs) -> SASresults:
         """
         Python method to call the PHREG procedure
         For more information on the statements see the Documentation link.
@@ -292,7 +292,7 @@ class SASstat:
         kwargs['ODSGraphics']=True
         return SASProcCommons._run_proc(self, "PHREG", required_set, legal_set, **kwargs)
 
-    def ttest(self, **kwargs: dict) -> 'SASresults':
+    def ttest(self, **kwargs) -> SASresults:
         """
         Python method to call the PHREG procedure
         For more information on the statements see the Documentation link.
@@ -309,14 +309,14 @@ class SASstat:
         :param kwargs: dict
         :return: SAS result object
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'by', 'cls', 'freq', 'paired', 'var', 'weight', 'procopts'}
 
         logging.debug("kwargs type: " + str(type(kwargs)))
         kwargs['ODSGraphics']=True
         return SASProcCommons._run_proc(self, "TTEST", required_set, legal_set, **kwargs)
 
-    def factor(self, **kwargs: dict) -> 'SASresults':
+    def factor(self, **kwargs) -> SASresults:
         """
         Python method to call the PHREG procedure
         For more information on the statements see the Documentation link.
@@ -331,7 +331,7 @@ class SASstat:
         :param kwargs: dict
         :return: SAS result object
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'by', 'freq', 'priors', 'pathdiagram', 'partial', 'var', 'weight', 'procopts'}
 
         logging.debug("kwargs type: " + str(type(kwargs)))

@@ -51,7 +51,7 @@ class SASqc:
         self.sas = session
         logging.debug("Initialization of SAS Macro: " + self.sas.saslog())
     
-    def cusum(self, **kwargs: dict) -> 'SASresults':
+    def cusum(self, **kwargs) -> SASresults:
         """
         Python method to call the CUSUM procedure
 
@@ -62,12 +62,12 @@ class SASqc:
         Documentation link:
         http://support.sas.com/documentation/cdl/en/qcug/68161/HTML/default/viewer.htm#qcug_cusum_sect001.htm
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'by', 'xchart', 'procopts'}
         logger.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "CUSUM", required_set, legal_set, **kwargs)
 
-    def macontrol(self, **kwargs: dict) -> 'SASresults':
+    def macontrol(self, **kwargs) -> SASresults:
         """
         Python method to call the MACONTROL procedure
 
@@ -76,12 +76,12 @@ class SASqc:
         Documentation link:
         http://support.sas.com/documentation/cdl/en/qcug/68161/HTML/default/viewer.htm#qcug_macontrol_toc.htm
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'procopts'}
         logger.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "MACONTROL", required_set, legal_set, **kwargs)
 
-    def capability(self, **kwargs: dict) -> 'SASresults':
+    def capability(self, **kwargs) -> SASresults:
         """
         Python method to call the CUSUM procedure
         ``required_set = {}``
@@ -92,20 +92,20 @@ class SASqc:
         Documentation link:
         http://support.sas.com/documentation/cdl/en/qcug/68161/HTML/default/viewer.htm#qcug_capability_sect001.htm
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'cdfplot', 'comphist', 'histogram', 'inset', 'intervals', 'output', 'ppplot', 'probplot',
                      'qqplot', 'freq', 'weight', 'id', 'by', 'spec', 'out', 'procopts'}
         logger.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "CAPABILITY", required_set, legal_set, **kwargs)
 
-    def shewhart(self, **kwargs: dict) -> 'SASresults':
+    def shewhart(self, **kwargs) -> SASresults:
         """
         Python method to call the SHEWHART procedure
 
         Documentation link:
         http://support.sas.com/documentation/cdl/en/qcug/68161/HTML/default/viewer.htm#qcug_shewhart_toc.htm
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'procopts'}
         logger.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "SHEWHART", required_set, legal_set, **kwargs)

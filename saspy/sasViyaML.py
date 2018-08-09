@@ -15,7 +15,7 @@
 #
 import logging
 from saspy.sasproccommons import SASProcCommons
-
+from saspy.sasresults import SASresults
 
 # create logging
 # logging = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ class SASViyaML:
         self.sas = session
         logging.debug("Initialization of SAS Macro: " + self.sas.saslog())
 
-    def factmac(self, **kwargs: dict) -> object:
+    def factmac(self, **kwargs) -> SASresults:
         """
         Python method to call the HPFOREST procedure
 
@@ -72,7 +72,7 @@ class SASViyaML:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc("HPFOREST", required_set, legal_set, **kwargs)
 
-    def forest(self, **kwargs: dict) -> object:
+    def forest(self, **kwargs) -> SASresults:
         """
         Python method to call the HPCLUS procedure
 
@@ -89,7 +89,7 @@ class SASViyaML:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc("HPCLUS", required_set, legal_set, **kwargs)
 
-    def gradboost(self, **kwargs: dict) -> object:
+    def gradboost(self, **kwargs) -> SASresults:
         """
         Python method to call the HPCLUS procedure
 
@@ -106,7 +106,7 @@ class SASViyaML:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc("HPCLUS", required_set, legal_set, **kwargs)
 
-    def nnet(self, **kwargs: dict) -> object:
+    def nnet(self, **kwargs) -> SASresults:
         """
         Python method to call the HPNEURAL procedure
 
@@ -124,7 +124,7 @@ class SASViyaML:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc("HPNEURAL", required_set, legal_set, **kwargs)
 
-    def svmachine(self, **kwargs: dict) -> object:
+    def svmachine(self, **kwargs) -> SASresults:
         """
         Python method to call the HPSVM procedure
 
@@ -135,7 +135,7 @@ class SASViyaML:
         """
         pass
 
-    def textmine(self, **kwargs: dict) -> object:
+    def textmine(self, **kwargs) -> SASresults:
         """
         Python method to call the HPBNET procedure
 

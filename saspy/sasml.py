@@ -51,7 +51,7 @@ class SASml:
         self.sas = session
         logging.debug("Initialization of SAS Macro: " + self.sas.saslog())
 
-    def forest(self, **kwargs: dict) -> 'SASresults':
+    def forest(self, **kwargs) -> SASresults:
         """
         Python method to call the HPFOREST procedure
 
@@ -71,7 +71,7 @@ class SASml:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "HPFOREST", required_set, legal_set, **kwargs)
 
-    def hp4score(self, **kwargs: dict) -> 'SASresults':
+    def hp4score(self, **kwargs) -> SASresults:
         """
         Python method to call the HP4SCORE procedure
 
@@ -90,7 +90,7 @@ class SASml:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "HP4SCORE", required_set, legal_set, **kwargs)
 
-    def cluster(self, **kwargs: dict) -> 'SASresults':
+    def cluster(self, **kwargs) -> SASresults:
         """
         Python method to call the HPCLUS procedure
 
@@ -109,7 +109,7 @@ class SASml:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "HPCLUS", required_set, legal_set, **kwargs)
 
-    def neural(self, **kwargs: dict) -> 'SASresults':
+    def neural(self, **kwargs) -> SASresults:
         """
         Python method to call the HPNEURAL procedure
 
@@ -131,7 +131,7 @@ class SASml:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "HPNEURAL", required_set, legal_set, **kwargs)
 
-    def treeboost(self, **kwargs: dict) -> 'SASresults':
+    def treeboost(self, **kwargs) -> SASresults:
         """
         Python method to call the TREEBOOST procedure
 
@@ -152,7 +152,7 @@ class SASml:
         logging.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "TREEBOOST", required_set, legal_set, **kwargs)
 
-    def hpbnet(self, **kwargs: dict) -> 'SASresults':
+    def hpbnet(self, **kwargs) -> SASresults:
         """
         Python method to call the HPBNET procedure
 

@@ -50,7 +50,7 @@ class SASets:
         self.sas = session
         self.logger.debug("Initialization of SAS Macro: " + self.sas.saslog())
 
-    def timeseries(self, **kwargs: dict) -> 'SASresults':
+    def timeseries(self, **kwargs) -> SASresults:
         """
         Python method to call the TIMESERIES procedure
 
@@ -66,7 +66,7 @@ class SASets:
         self.logger.debug("kwargs type: " + str(type(kwargs)))
         return SASProcCommons._run_proc(self, "TIMESERIES", required_set, legal_set, **kwargs)
 
-    def arima(self, **kwargs: dict) -> 'SASresults':
+    def arima(self, **kwargs) -> SASresults:
         """
         Python method to call the ARIMA procedure
 
@@ -81,7 +81,7 @@ class SASets:
         legal_set = {'by', 'identify', 'estimate', 'outlier', 'forecast', 'out', 'procopts'}
         return SASProcCommons._run_proc(self, "ARIMA", required_set, legal_set, **kwargs)
 
-    def ucm(self, **kwargs: dict) -> 'SASresults':
+    def ucm(self, **kwargs) -> SASresults:
         """
         Python method to call the UCM procedure
 
@@ -102,7 +102,7 @@ class SASets:
                      'procopts'}
         return SASProcCommons._run_proc(self, "UCM", required_set, legal_set, **kwargs)
 
-    def esm(self, **kwargs: dict) -> 'SASresults':
+    def esm(self, **kwargs) -> SASresults:
         """
         Python method to call the ESM procedure
 
@@ -112,11 +112,11 @@ class SASets:
 
         Documentation link: http://support.sas.com/documentation/cdl//en/etsug/68148/HTML/default/viewer.htm#etsug_esm_syntax.htm
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'by', 'id', 'forecast', 'out', 'procopts'}
         return SASProcCommons._run_proc(self, "ESM", required_set, legal_set, **kwargs)
 
-    def timeid(self, **kwargs: dict) -> 'SASresults':
+    def timeid(self, **kwargs) -> SASresults:
         """
         Python method to call the TIMEID procedure
 
@@ -126,11 +126,11 @@ class SASets:
 
         Documentation link: http://support.sas.com/documentation/cdl//en/etsug/68148/HTML/default/viewer.htm#etsug_timeid_syntax.htm
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'by', 'id', 'out', 'procopts'}
         return SASProcCommons._run_proc(self, "TIMEID", required_set, legal_set, **kwargs)
 
-    def timedata(self, **kwargs: dict) -> 'SASresults':
+    def timedata(self, **kwargs) -> SASresults:
         """
         Python method to call the TIMEDATA procedure
 
@@ -141,6 +141,6 @@ class SASets:
         Documentation link:
         http://support.sas.com/documentation/cdl//en/etsug/68148/HTML/default/viewer.htm#etsug_timedata_syntax.htm
         """
-        required_set = {}
+        required_set = set()
         legal_set = {'by', 'id', 'fcmport', 'out', 'outarrays', 'outscalars', 'var', 'prog_stmts', 'procopts'}
         return SASProcCommons._run_proc(self, "TIMEDATA", required_set, legal_set, **kwargs)

@@ -830,11 +830,11 @@ Will use HTML5 for this SASsession.""")
 
       l2 = ll['LOG'].rpartition("TABLE_EXISTS= ")
       l2 = l2[2].partition("\n")
-      exists = int(l2[0])
+      exists = bool(l2[0])
 
       return exists
    
-   def read_csv(self, file: str, table: str, libref: str ="", nosub: bool =False, opts: dict ={}) -> '<SASdata object>':
+   def read_csv(self, file: str, table: str, libref: str ="", nosub: bool =False, opts: dict ={}):
       '''
       This method will import a csv file into a SAS Data Set and return the SASdata object referring to it.
       file    - eithe the OS filesystem path of the file, or HTTP://... for a url accessible file
@@ -880,7 +880,7 @@ Will use HTML5 for this SASsession.""")
          ll = self.submit(code, "text")
          return ll['LOG']
 
-   def dataframe2sasdata(self, df: '<Pandas Data Frame object>', table: str ='a', libref: str ="", keep_outer_quotes: bool=False):
+   def dataframe2sasdata(self, df: pd.DataFrame, table: str ='a', libref: str ="", keep_outer_quotes: bool=False):
       '''
       This method imports a Pandas Data Frame to a SAS Data Set, returning the SASdata object for the new Data Set.
       df      - Pandas Data Frame to import to a SAS Data Set
@@ -947,7 +947,8 @@ Will use HTML5 for this SASsession.""")
 
       self._asubmit(";;;;run;", "text")
 
-   def sasdata2dataframe(self, table: str, libref: str ='', dsopts: dict ={}, rowsep: str = '\x01', colsep: str = '\x02', **kwargs) -> '<Pandas Data Frame object>':
+   def sasdata2dataframe(self, table: str, libref: str ='', dsopts: dict ={}, rowsep: str = '\x01', colsep: str = '\x02', **kwargs) \
+           -> pd.DataFrame:
       '''
       This method exports the SAS Data Set to a Pandas Data Frame, returning the Data Frame object.
       table   - the name of the SAS Data Set you want to export to a Pandas Data Frame

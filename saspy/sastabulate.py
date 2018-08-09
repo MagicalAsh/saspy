@@ -202,7 +202,7 @@ class Tabulate:
             for i in range(len(args))
         ]
 
-    def table(self, **kwargs: dict) -> 'SASresults':
+    def table(self, **kwargs) -> SASresults:
         """
         Executes a PROC TABULATE statement and displays results in HTML
 
@@ -212,7 +212,7 @@ class Tabulate:
         """
         return self.execute_table('HTML', **kwargs)
 
-    def text_table(self, **kwargs: dict) -> 'SASresults':
+    def text_table(self, **kwargs) -> SASresults:
         """
         Executes a PROC TABULATE statement and displays results as plain text
 
@@ -222,7 +222,7 @@ class Tabulate:
         """
         return self.execute_table('text', **kwargs)
 
-    def to_dataframe(self, **kwargs: dict) -> 'SASresults':
+    def to_dataframe(self, **kwargs) -> SASresults:
         """
         Executes a PROC TABULATE statement and converts results to a MultiIndex DataFrame
 
@@ -232,7 +232,7 @@ class Tabulate:
         """
         return self.execute_table('Pandas', **kwargs)
 
-    def execute_table(self, _output_type, **kwargs: dict) -> 'SASresults':
+    def execute_table(self, _output_type, **kwargs) -> SASresults:
         """
         executes a PROC TABULATE statement 
 

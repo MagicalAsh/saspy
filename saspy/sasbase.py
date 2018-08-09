@@ -239,7 +239,7 @@ class SASsession():
     """
 
     # def __init__(self, cfgname: str ='', kernel: 'SAS_kernel' =None, saspath :str ='', options: list =[]) -> 'SASsession':
-    def __init__(self, **kwargs) -> 'SASsession':
+    def __init__(self, **kwargs) -> None:
         self._loaded_macros     = False
         self._obj_cnt           = 0
         self.nosub              = False
@@ -345,7 +345,7 @@ class SASsession():
 
         return self._io._asubmit(code, results)
 
-    def submit(self, code: str, results: str = '', prompt: dict = []) -> dict:
+    def submit(self, code: str, results: str = '', prompt: dict = {}) -> dict:
         '''
         This method is used to submit any SAS code. It returns the Log and Listing as a python dictionary.
 
@@ -402,7 +402,7 @@ class SASsession():
         '''
         self.nosub = nosub
 
-    def set_batch(self, batch: bool) -> bool:
+    def set_batch(self, batch: bool):
         """
         This method sets the batch attribute for the SASsession object; it stays in effect until changed.
         For methods that just display results like SASdata object methods (head, tail, hist, series, etc.)
@@ -422,7 +422,7 @@ class SASsession():
         """
         self.batch = batch
 
-    def set_results(self, results: str) -> str:
+    def set_results(self, results: str):
         """
         This method set the results attribute for the SASsession object; it stays in effect till changed
 
@@ -443,7 +443,7 @@ class SASsession():
         """
         return self._io.exist(table, libref)
 
-    def sasets(self) -> 'SASets':
+    def sasets(self) -> SASets:
         """
         This methods creates a SASets object which you can use to run various analytics.
         See the sasets.py module.
@@ -454,7 +454,7 @@ class SASsession():
             self._loaded_macros = True
         return SASets(self)
 
-    def sasstat(self) -> 'SASstat':
+    def sasstat(self) -> SASstat:
         """
         This methods creates a SASstat object which you can use to run various analytics.
         See the sasstat.py module.
@@ -467,7 +467,7 @@ class SASsession():
 
         return SASstat(self)
 
-    def sasml(self) -> 'SASml':
+    def sasml(self) -> SASml:
         """
         This methods creates a SASML object which you can use to run various analytics. See the sasml.py module.
 
@@ -480,7 +480,7 @@ class SASsession():
 
         return SASml(self)
 
-    def sasqc(self) -> 'SASqc':
+    def sasqc(self) -> SASqc:
         """
         This methods creates a SASqc object which you can use to run various analytics. See the sasqc.py module.
 
@@ -492,7 +492,7 @@ class SASsession():
 
         return SASqc(self)
 
-    def sasutil(self) -> 'SASutil':
+    def sasutil(self) -> SASutil:
         '''
         This methods creates a SASutil object which you can use to run various analytics.
         See the sasutil.py module.
@@ -520,7 +520,7 @@ class SASsession():
         self._io._asubmit(code.decode(), results='text')
         os.close(fd)
 
-    def sasdata(self, table: str, libref: str = '', results: str = '', dsopts: dict = {}) -> 'SASdata':
+    def sasdata(self, table: str, libref: str = '', results: str = '', dsopts: dict = {}) -> SASdata:
         """
         Method to define an existing SAS dataset so that it can be accessed via SASPy
 
@@ -556,7 +556,7 @@ class SASsession():
         return sd
 
     def saslib(self, libref: str, engine: str = ' ', path: str = '',
-               options: str = ' ', prompt: dict = []) -> str:
+               options: str = ' ', prompt: dict = {}) -> str:
         """
 
         :param libref:  the libref to be assigned
@@ -600,7 +600,7 @@ class SASsession():
             else:
                 print(ll['LOG'].rsplit(";*\';*\";*/;\n")[0])
 
-    def read_csv(self, file: str, table: str = '_csv', libref: str = '', results: str = '', opts: dict ={}) -> 'SASdata':
+    def read_csv(self, file: str, table: str = '_csv', libref: str = '', results: str = '', opts: dict ={}) -> SASdata:
         """
         :param file: either the OS filesystem path of the file, or HTTP://... for a url accessible file
         :param table: the name of the SAS Data Set to create
@@ -1240,7 +1240,7 @@ class SASdata:
                     return ll
 
     def partition(self, var: str = '', fraction: float = .7, seed: int = 9878, kfold: int = 1,
-                  out: 'SASdata' = None, singleOut: bool = True) -> object:
+                  out: 'SASdata' = None, singleOut: bool = True):
         """
         Partition a sas data object using SRS sampling or if a variable is specified then
         stratifying with respect to that variable
@@ -1543,7 +1543,7 @@ class SASdata:
                else:
                   return ll
 
-    def impute(self, vars: dict, replace: bool = False, prefix: str = 'imp_', out: 'SASData' = None) -> 'SASdata':
+    def impute(self, vars: dict, replace: bool = False, prefix: str = 'imp_', out: 'SASdata' = None) -> 'SASdata':
         """
         Imputes missing values for a SASdata object.
 
