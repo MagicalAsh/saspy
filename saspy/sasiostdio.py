@@ -859,7 +859,8 @@ Will use HTML5 for this SASsession.""")
       else:
          ll = self.submit(code, "text")
    
-   def write_csv(self, file: str, table: str, libref: str ="", nosub: bool =False, dsopts: dict ={}, opts: dict ={}) -> 'The LOG showing the results of the step':
+   def write_csv(self, file: str, table: str, libref: str ="", nosub: bool =False, dsopts: dict ={}, opts: dict ={}) \
+           -> 'The LOG showing the results of the step':
       '''
       This method will export a SAS Data Set to a file in CSV format.
       file    - the OS filesystem path of the file to be created (exported from the SAS Data Set)
@@ -880,7 +881,7 @@ Will use HTML5 for this SASsession.""")
          ll = self.submit(code, "text")
          return ll['LOG']
 
-   def dataframe2sasdata(self, df: pd.DataFrame, table: str ='a', libref: str ="", keep_outer_quotes: bool=False):
+   def dataframe2sasdata(self, df: 'pd.DataFrame', table: str ='a', libref: str ="", keep_outer_quotes: bool=False):
       '''
       This method imports a Pandas Data Frame to a SAS Data Set, returning the SASdata object for the new Data Set.
       df      - Pandas Data Frame to import to a SAS Data Set
@@ -948,7 +949,7 @@ Will use HTML5 for this SASsession.""")
       self._asubmit(";;;;run;", "text")
 
    def sasdata2dataframe(self, table: str, libref: str ='', dsopts: dict ={}, rowsep: str = '\x01', colsep: str = '\x02', **kwargs) \
-           -> pd.DataFrame:
+           -> 'pd.DataFrame':
       '''
       This method exports the SAS Data Set to a Pandas Data Frame, returning the Data Frame object.
       table   - the name of the SAS Data Set you want to export to a Pandas Data Frame
@@ -1140,7 +1141,8 @@ Will use HTML5 for this SASsession.""")
 
       return df
 
-   def sasdata2dataframeCSV(self, table: str, libref: str ='', dsopts: dict ={}, tempfile: str=None, tempkeep: bool=False, **kwargs) -> '<Pandas Data Frame object>':
+   def sasdata2dataframeCSV(self, table: str, libref: str ='', dsopts: dict ={}, tempfile: str=None, tempkeep: bool=False, **kwargs) \
+           -> 'pd.DataFrame':
       '''
       This method exports the SAS Data Set to a Pandas Data Frame, returning the Data Frame object.
       table    - the name of the SAS Data Set you want to export to a Pandas Data Frame

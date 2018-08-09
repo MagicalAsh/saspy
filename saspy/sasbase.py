@@ -520,7 +520,7 @@ class SASsession():
         self._io._asubmit(code.decode(), results='text')
         os.close(fd)
 
-    def sasdata(self, table: str, libref: str = '', results: str = '', dsopts: dict = {}) -> SASdata:
+    def sasdata(self, table: str, libref: str = '', results: str = '', dsopts: dict = {}) -> 'SASdata':
         """
         Method to define an existing SAS dataset so that it can be accessed via SASPy
 
@@ -600,7 +600,7 @@ class SASsession():
             else:
                 print(ll['LOG'].rsplit(";*\';*\";*/;\n")[0])
 
-    def read_csv(self, file: str, table: str = '_csv', libref: str = '', results: str = '', opts: dict ={}) -> SASdata:
+    def read_csv(self, file: str, table: str = '_csv', libref: str = '', results: str = '', opts: dict ={}) -> 'SASdata':
         """
         :param file: either the OS filesystem path of the file, or HTTP://... for a url accessible file
         :param table: the name of the SAS Data Set to create
